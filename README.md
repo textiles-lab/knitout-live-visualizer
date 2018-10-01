@@ -1,0 +1,1 @@
+The barest start of something that tries to take the ideas of knitout-visualizer and the various other box-model visualizers and use them to create a stitch mesh composed of "machine faces", whatever those are.
