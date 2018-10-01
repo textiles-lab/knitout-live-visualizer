@@ -211,17 +211,183 @@ function parseKnitout(codeText, machine) {
 
 //--------------------------------------
 
+function Edge(type) {
+	this.type = type;
+};
+
+Edge.prototype.EMPTY = "edge-empty";
+Edge.prototype.YARN = "edge-yarn";
+Edge.prototype.LOOP = "edge-loop";
+
+//--------------------------------------
+
+function Face() {
+	this.leftEdges = []; //bottom-to-top
+	this.rightEdges = []; //bottom-to-top
+	this.bottomEdges = []; //left-to-right
+	this.topEdges = []; //left-to-right
+};
+
+//--------------------------------------
+
+function Column() {
+	this.topEdges = []; //edges at the top of the top face (left-to-right)
+	this.leftEdges = []; //edges above faces on the left (bottom-to-top)
+	this.rightEdges = []; //edges above faces on the right (bottom-to-top)
+	this.left = null;
+	this.right = null;
+};
+
+Column.prototype.addFace = function Column_addFace(face) {
+	//link top of column to bottom of face:
+	if (this.topEdges.length !== 0) {
+		console.assert(face.bottomEdges.length === this.topEdges.length, "bottom of face matches top of column (length)");
+		for (let i = 0; i < face.bottomEdges.length; ++i) {
+			this.topEdges[i].link(face.bottomEdges[i]); //will assert() on bad type match
+		}
+	} else {
+		for (let i = 0; i < face.bottomEdges.length; ++i) {
+			console.assert(face.bottomEdges[i].type === Edge.EMPTY, "bottom of face matches top of empty column");
+		}
+	}
+
+	//link any proud edges on left column:
+	let onLeft = face.leftEdges.slice();
+	if (this.left && this.left.rightEdges.length) {
+		console.assert(!this.leftEdges.length, "can't have left column right edges and local left edges at the same time.");
+		while (onLeft.length && this.left.rightEdges.length) {
+			//link bottom-most of each edge list:
+			onLeft.shift().link(this.left.rightEdges.shift());
+		}
+	}
+	if (onLeft.length) {
+		console.assert(!this.left || this.left.rightEdges.length === 0, "Must not have a left column with extra edges.");
+		this.leftEdges.push(...onLeft);
+	}
+
+	//link any proud edges on right column:
+	let onRight = face.rightEdges.slice();
+	if (this.right && this.right.leftEdges.length) {
+		console.assert(!this.rightEdges.length, "can't have right column left edges and local right edges at the same time.");
+		while (onRight.length && this.right.leftEdges.length) {
+			//link bottom-most of each edge list:
+			onRight.shift().link(this.right.leftEdges.shift());
+		}
+	}
+	if (onRight.length) {
+		console.assert(!this.right || this.right.leftEdges.length === 0, "Must not have a right column with extra edges.");
+		this.rightEdges.push(...onRight);
+	}
+
+	//store top edges for future linking:
+	this.topEdges = face.topEdges.slice();
+
+};
+
+//--------------------------------------
+
 function MeshMachine() {
-	this.carriers = []; //carriers, front-to-back. Each is {name:"A", attached:...(?)}
-	this.needles = {};
+	this.carriers = []; //carriers, front-to-back. Each is {name:"A", yarnColumn:...(?)}
+	this.needleColumns = {};
+	this.yarnColumns = {};
 };
 
 //Helpers:
 
+function previousNeedle(n) {
+	let m = /^([fb]s?)([-+]?\d+)$/.match(n);
+	console.assert(m, "previousNeedle must be passed needle; got '" + n + "' instead.");
+	return m.group(1) + (parseInt(m[2])-1).toString();
+}
+
+function nextNeedle(n) {
+	let m = /^([fb]s?)([-+]?\d+)$/.match(n);
+	console.assert(m, "nextNeedle must be passed needle; got '" + n + "' instead.");
+	return m.group(1) + (parseInt(m[2])+1).toString();
+}
+
+//yarn column before given needle when knitting in direction d:
+MeshMachine.prototype.getYarnColumn = function MeshMachine_getYarnColumnBefore(d, n, create) {
+	if (typeof(create) === 'undefined') create = true;
+	if (d === '-') {
+		return this.getYarnColumnBefore('+', nextNeedle(n), create);
+	}
+	if (!(n in this.yarnColumns)) {
+		if (!create) return null;
+
+		let column = new Column();
+		this.yarnColumns[n] = column;
+
+		let left = this.getNeedleColumn(previousNeedle(n), false);
+		if (left !== null) {
+			console.assert(left.rightColumn === null, "shouldn't be linked");
+			column.left = left;
+			left.right = column;
+		}
+		let right = this.getNeedleColumn(n, false);
+		if (right !== null) {
+			console.assert(right.leftColumn === null, "shouldn't be linked");
+			column.right = right;
+			right.left = column;
+		}
+	}
+	return this.yarnColumns[n];
+};
+
+//needle column at needle n:
+MeshMachine.prototype.getNeedleColumn = function MeshMachine_getNeedleColumn(n, create) {
+	if (typeof(create) === 'undefined') create = true;
+	if (!(n in this.needleColumns)) {
+		if (!create) return null;
+
+		let column = new Column();
+		this.needleColumns[n] = column;
+
+		let left = this.getYarnColumnBefore('+', n, false);
+		if (left !== null) {
+			console.assert(left.rightColumn === null, "shouldn't be linked");
+			column.left = left;
+			left.right = column;
+		}
+		let right = this.getYarnColumnBefore('-', n, false);
+		if (right !== null) {
+			console.assert(right.leftColumn === null, "shouldn't be linked");
+			column.right = right;
+			right.left = column;
+		}
+	}
+	return this.needleColumns[n];
+};
+
 MeshMachine.prototype.bringCarrier = function MeshMache_moveCarrier(d, n, cn) {
+	console.assert(cn in this.carriers, "Carrier exists.");
+
 	//set up yarn for a given stitch.
 	//post-condition: needle just before n in direction d has its top-left face with yarn at exit.
 	// i.e. carrier is ready to make stitch at n in direction d
+	let c = this.carriers[cn];
+
+	let column = this.getYarnColumn(d,n);
+
+	if (!c.column) {
+		//carrier isn't in, so bring in at the top of the target column:
+
+		while (column.left && column.left.
+
+	}
+
+	if (c.column) {
+		//carrier is in, and needs to move, potentially
+		//NOTE: it should exit from top of column.
+		assert(cn in c.column.topEdge.yarns, "carrier exits column through top edge");
+
+	} else {
+		//carrier isn't in, add face at top of column.
+
+	}
+
+
+	let yarnColumn = getYarnColumn
 
 
 };
@@ -252,6 +418,24 @@ MeshMachine.prototype.rack = function MeshMachine_rack(r) { /* nothing */ };
 
 MeshMachine.prototype.knit = function MeshMachine_knit(d, n, cs) {
 	//TODO: knit stitch
+	let column = this.getNeedleColumn(n);
+
+	if (cs.length !== 0) {
+		this.bringCarrier(d,n,cs[0]);
+		//TODO: the rest of the yarns.
+	}
+
+	//build a knit face:
+	let knit = new Face();
+	knit.leftEdges.push(new Edge(Edge.YARN));
+	knit.rightEdges.push(new Edge(Edge.YARN));
+	//custom top/bottom edges depending on whether loop is empty:
+	knit.bottomEdges.push(new Edge((column.topEdges.length === 0 ? Edge.EMPTY : Edge.LOOP)));
+	knit.topEdges.push(new Edge((cs.length === 0 ? Edge.EMPTY : Edge.LOOP)));
+
+	//TODO: might need to add a bunch of empty faces to consume extra space in column(?)
+	column.addFace(knit);
+
 };
 
 MeshMachine.prototype.tuck = function MeshMachine_tuck(d, n, cs) {
