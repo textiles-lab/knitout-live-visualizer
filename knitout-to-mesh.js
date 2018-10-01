@@ -359,7 +359,7 @@ MeshMachine.prototype.getNeedleColumn = function MeshMachine_getNeedleColumn(n, 
 	return this.needleColumns[n];
 };
 
-MeshMachine.prototype.bringCarrier = function MeshMache_moveCarrier(d, n, cn) {
+MeshMachine.prototype.bringCarrier = function MeshMachine_moveCarrier(d, n, cn) {
 	console.assert(cn in this.carriers, "Carrier exists.");
 
 	//set up yarn for a given stitch.
@@ -386,11 +386,13 @@ MeshMachine.prototype.bringCarrier = function MeshMache_moveCarrier(d, n, cn) {
 
 	}
 
-
-	let yarnColumn = getYarnColumn
-
-
 };
+
+/*
+MeshMachine.prototype.assertEven = function MeshMachine_assertEven() {
+	//After every stitch, there should be no left or right edges outstanding (except to null columns)
+};
+*/
 
 //Required functions:
 
