@@ -368,7 +368,7 @@ YarnCell.prototype.desc = function YarnCell_desc() {
 function LoopCell(type) {
 	this.type = type;
 	this.y = 0;
-	this.ports = { '-':[], '+':[], 'v':[], '^':[] };
+	this.ports = { '-':[], '+':[], 'v':[], '^':[], 'x':[], 'o':[] };
 }
 
 LoopCell.prototype.addOut = YarnCell.prototype.addOut;
@@ -378,7 +378,19 @@ LoopCell.prototype.canAbsorb = function LoopCell_canAbsorb(below) {
 };
 
 LoopCell.prototype.desc = function LoopCell_desc() {
-	return this.type;
+	const map = {
+		t:'∧',
+		k:'∩',
+		x:'╻',
+		X:'╹',
+		s:'┰',
+		S:'┸'
+	};
+	if (this.type in map) {
+		return map[this.type];
+	} else {
+		return this.type;
+	}
 };
 
 //--------------------------------------
@@ -404,30 +416,46 @@ MeshMachine.prototype.dump = function MeshMachine_dump() {
 	}
 	if (minIndex > maxIndex) return;
 	console.log("Raster is [" + minIndex + "," + maxIndex + "]x[" + 0 + "," + this.topRow + "]:");
+	
+	let outRows = [];
 
 	let rasterWidth = maxIndex+1-minIndex;
-	let raster = new Array(rasterWidth * (this.topRow+1));
-	for (let i = minIndex; i <= maxIndex; ++i) {
-		this.beds['f'].getColumn(i).forEach(function(c){
-			let y = c.y;
-			let x = i - minIndex;
-			console.assert(typeof(raster[y * rasterWidth + x]) === 'undefined', "no stacks");
-			raster[y * rasterWidth + x] = c.desc();
-		});
-	}
-
-	let maxY = Math.min(20, this.topRow); //DEBUG -- should be this.topRow
-	for (let y = maxY; y >= 0; --y) {
-		let row = "";
-		for (let x = 0; x < rasterWidth; ++x) {
-			if (typeof(raster[y * rasterWidth + x]) !== 'undefined') {
-				row += raster[y * rasterWidth + x];
-			} else {
-				row += ' ';
+	['f','b'].forEach(function(bn) {
+		let outIndex = 0;
+		function outRow(row) {
+			if (outIndex >= outRows.length) {
+				outRows.push("");
 			}
+			if (outRows[outIndex] != "") outRows[outIndex] += " | ";
+			outRows[outIndex] += row;
+			outIndex += 1;
 		}
-		console.log(row);
-	}
+
+		let raster = new Array(rasterWidth * (this.topRow+1));
+		for (let i = minIndex; i <= maxIndex; ++i) {
+			this.beds[bn].getColumn(i).forEach(function(c){
+				let y = c.y;
+				let x = i - minIndex;
+				console.assert(typeof(raster[y * rasterWidth + x]) === 'undefined', "no stacks");
+				raster[y * rasterWidth + x] = c.desc();
+			});
+		}
+
+		let maxY = Math.min(20, this.topRow); //DEBUG -- should be this.topRow
+		for (let y = maxY; y >= 0; --y) {
+			let row = "";
+			for (let x = 0; x < rasterWidth; ++x) {
+				if (typeof(raster[y * rasterWidth + x]) !== 'undefined') {
+					row += raster[y * rasterWidth + x];
+				} else {
+					row += ' ';
+				}
+			}
+			outRow(row);
+		}
+	}, this);
+
+	console.log(outRows.join("\n"));
 
 };
 
@@ -668,7 +696,54 @@ MeshMachine.prototype.tuck = function MeshMachine_tuck(d, n, cs) {
 };
 
 MeshMachine.prototype.split = function MeshMachine_split(d, n, n2, cs) {
-	//TODO: split stitch face
+	//TODO: splitting *nothing* is the same as tucking.
+
+	//Bring carriers on over:
+	cs.forEach(function(cn){
+		this.bringCarrier(d,n,cn);
+	}, this);
+
+	let cells = [];
+
+	//Turn carriers toward the needle:
+	if (cs.length) {
+		let turn = new YarnCell();
+		cs.forEach(function(cn){
+			turn.addOut('v', cn);
+			turn.addOut(d, cn);
+		}, this);
+		cells.push({i:yarnBeforeIndex(d, n), cell:turn});
+	}
+
+	//add a pair of faces:
+	let xferFrom = new LoopCell((cs.length ? 's' : 'x'));
+	cs.forEach(function(cn){
+		xferFrom.addOut((d === '+' ? '-' : '+'), cn);
+		xferFrom.addOut(d, cn);
+		//TODO: loop connections?
+	}, this);
+	cells.push({i:needleIndex(n), cell:xferFrom});
+
+	let xferTo = new LoopCell((cs.length ? 'S' : 'X'));
+	//TODO: loop connections?
+	cells.push({bed:needleBed(n2), i:needleIndex(n2), cell:xferTo});
+
+
+	//turn carriers back up:
+	if (cs.length) {
+		let turn = new YarnCell();
+		let nextD = d;
+		let nextN = (d === '+' ? nextNeedle(n) : previousNeedle(n));
+		cs.forEach(function(cn){
+			turn.addOut((d === '+' ? '-' : '+'), cn);
+			turn.addOut('^', cn);
+			this.carriers[cn].at = {d:nextD, n:nextN};
+		}, this);
+		cells.push({i:yarnAfterIndex(d, n), cell:turn});
+	}
+
+	this.addCells(needleBed(n), cells);
+
 };
 
 MeshMachine.prototype.miss = function MeshMachine_miss(d, n, cs) {
