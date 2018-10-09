@@ -441,7 +441,7 @@ MeshMachine.prototype.dump = function MeshMachine_dump() {
 			});
 		}
 
-		let maxY = Math.min(20, this.topRow); //DEBUG -- should be this.topRow
+		let maxY = Math.min(2000, this.topRow); //DEBUG -- should be this.topRow
 		for (let y = maxY; y >= 0; --y) {
 			let row = "";
 			for (let x = 0; x < rasterWidth; ++x) {
