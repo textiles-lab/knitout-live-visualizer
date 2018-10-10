@@ -379,6 +379,7 @@ LoopCell.prototype.canAbsorb = function LoopCell_canAbsorb(below) {
 
 LoopCell.prototype.desc = function LoopCell_desc() {
 	const map = {
+		m:'┄',
 		t:'∧',
 		k:'∩',
 		x:'╻',
@@ -458,6 +459,243 @@ MeshMachine.prototype.dump = function MeshMachine_dump() {
 	console.log(outRows.join("\n"));
 
 };
+
+MeshMachine.prototype.dumpObj = function MeshMachine_dumpObj(objFile) {
+	//Dump obj faces. Y-up. Front bed at Z=1, back bed at Z=-1 .
+
+	let minIndex = Infinity;
+	let maxIndex = -Infinity;
+	for (let bn in this.beds) {
+		minIndex = Math.min(minIndex, this.beds[bn].minIndex);
+		maxIndex = Math.max(maxIndex, this.beds[bn].maxIndex);
+	}
+	if (minIndex > maxIndex) return;
+	console.log("Raster is [" + minIndex + "," + maxIndex + "]x[" + 0 + "," + this.topRow + "]:");
+	
+	let outColumns = {
+		f:[], b:[]
+	};
+	for (let i = minIndex; i <= maxIndex; ++i) {
+		outColumns.f.push([]);
+		outColumns.b.push([]);
+	}
+
+	let rasterWidth = maxIndex+1-minIndex;
+	['f','b'].forEach(function(bn) {
+		for (let i = minIndex; i <= maxIndex; ++i) {
+			let column = outColumns[bn][i - minIndex];
+			let y = 0;
+			let cs = []; //active loops/yarns from previous faces.
+			function emptyCell(y) {
+				let cell = (i % 2 === 0 ? new LoopCell('m') : new YarnCell());
+				cell.y = y;
+				cs.forEach(function (cn) {
+					cell.addOut('v', cn);
+					cell.addOut('^', cn);
+				});
+				return cell;
+			}
+			this.beds[bn].getColumn(i).forEach(function(c){
+				while (y < c.y) {
+					column.push( emptyCell(y) );
+					++y;
+				}
+				column.push(c);
+				++y;
+				c.ports['v'].forEach(function (cn) {
+					let idx = cs.indexOf(cn);
+					console.assert(idx !== -1, "Face should have only active yarns as inputs.");
+					cs.splice(idx, 1);
+				});
+				console.assert(cs.length === 0, "Should have accounted for extra yarns in the face.", cs, c);
+				c.ports['^'].forEach(function (cn) {
+					cs.push(cn);
+				});
+			});
+			while (y <= this.topRow) {
+				column.push( emptyCell(y) );
+				++y;
+			}
+			//TODO: explicit drop face?
+		}
+	}, this);
+
+	let verts = [];
+	let faces = [];
+	let labels = [];
+	let uvs = [];
+
+	uvs.push(
+		"vt " + (0.0/4.0) + " " + (0.0/4.0),
+		"vt " + (1.0/4.0) + " " + (0.0/4.0),
+		"vt " + (1.0/4.0) + " " + (1.0/4.0),
+		"vt " + (0.0/4.0) + " " + (1.0/4.0)
+	);
+	const unknownUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (0.0/4.0) + " " + (3.0/4.0),
+		"vt " + (1.0/4.0) + " " + (3.0/4.0),
+		"vt " + (1.0/4.0) + " " + (4.0/4.0),
+		"vt " + (0.0/4.0) + " " + (4.0/4.0)
+	);
+	const backKnitUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (1.0/4.0) + " " + (3.0/4.0),
+		"vt " + (2.0/4.0) + " " + (3.0/4.0),
+		"vt " + (2.0/4.0) + " " + (4.0/4.0),
+		"vt " + (1.0/4.0) + " " + (4.0/4.0)
+	);
+	const frontKnitUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (0.0/4.0) + " " + (2.0/4.0),
+		"vt " + (1.0/4.0) + " " + (2.0/4.0),
+		"vt " + (1.0/4.0) + " " + (3.0/4.0),
+		"vt " + (0.0/4.0) + " " + (3.0/4.0)
+	);
+	const backTuckUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (1.0/4.0) + " " + (2.0/4.0),
+		"vt " + (2.0/4.0) + " " + (2.0/4.0),
+		"vt " + (2.0/4.0) + " " + (3.0/4.0),
+		"vt " + (1.0/4.0) + " " + (3.0/4.0)
+	);
+	const frontTuckUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (0.0/4.0) + " " + (1.0/4.0),
+		"vt " + (1.0/4.0) + " " + (1.0/4.0),
+		"vt " + (1.0/4.0) + " " + (2.0/4.0),
+		"vt " + (0.0/4.0) + " " + (2.0/4.0)
+	);
+	const backMissUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (1.0/4.0) + " " + (1.0/4.0),
+		"vt " + (2.0/4.0) + " " + (1.0/4.0),
+		"vt " + (2.0/4.0) + " " + (2.0/4.0),
+		"vt " + (1.0/4.0) + " " + (2.0/4.0)
+	);
+	const frontMissUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (2.0/4.0) + " " + (1.0/4.0),
+		"vt " + (3.0/4.0) + " " + (1.0/4.0),
+		"vt " + (2.0/4.0) + " " + (2.0/4.0),
+		"vt " + (3.0/4.0) + " " + (2.0/4.0)
+	);
+	const looplessMissUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	uvs.push(
+		"vt " + (3.0/4.0) + " " + (1.0/4.0),
+		"vt " + (4.0/4.0) + " " + (1.0/4.0),
+		"vt " + (3.0/4.0) + " " + (2.0/4.0),
+		"vt " + (4.0/4.0) + " " + (2.0/4.0)
+	);
+	const yarnlessMissUVs = [uvs.length-3, uvs.length-2, uvs.length-1, uvs.length];
+
+	let lookup = {};
+	function getVertexStr(x,y,z) {
+		let vs = "v"
+			+ " " + x
+			+ " " + y
+			+ " " + z;
+		if (!(vs in lookup)) {
+			lookup[vs] = verts.length + 1;
+			verts.push(vs);
+		}
+		return lookup[vs];
+	};
+
+	//connect faces / allocate vertices:
+	for (let i = minIndex; i <= maxIndex; ++i) {
+		let bColumn = outColumns.b[i-minIndex];
+		let fColumn = outColumns.f[i-minIndex];
+		console.assert(fColumn.length === bColumn.length, "same size grids");
+		for (let y = 0; y < fColumn.length; ++y) {
+			let b = bColumn[y];
+			let f = fColumn[y];
+			console.assert(b.ports["x"].length === 0, "can't leave backward from back bed");
+			console.assert(f.ports["o"].length === 0, "can't leave forward from front bed");
+			if (b.ports["o"].length !== 0 || f.ports["x"].length !== 0) {
+				console.assert(b.ports["o"].length === f.ports["x"].length, "should have same yarns leaving front as arriving at back");
+				//TODO: do something about that....
+			} else {
+				//Front face stuff:
+				let uvs = unknownUVs;
+				if (f instanceof YarnCell) {
+					labels.push( "ty 0 0 0 0" );
+				} else if (f instanceof LoopCell) {
+					if (f.type === "k") uvs = frontKnitUVs;
+					else if (f.type === "t") uvs = frontTuckUVs;
+					else if (f.type === "m") {
+						let hasLoop = !(f.ports['v'].length === 0 && f.ports['^'].length === 0);
+						let hasYarn = !(f.ports['-'].length === 0 && f.ports['+'].length === 0);
+						if (hasLoop && hasYarn) uvs = frontMissUVs;
+						else if (hasLoop) uvs = yarnlessMissUVs;
+						else if (hasYarn) uvs = looplessMissUVs;
+						else /* TODO: blank faces? */;
+					}
+					if (f.type === "k" || f.type === "t" || f.type === "m") {
+						labels.push( "t" + f.type + " 1 0 1 0" );
+					} else {
+						console.assert(false, "not sure how to label this face: ", f);
+					}
+				} else {
+					console.assert(f instanceof YarnCell ||  b instanceof LoopCell, "must be Yarn or Loop");
+				}
+				faces.push(
+					"f"
+					+ " " + getVertexStr(i, y, 1) + "/" + uvs[0]
+					+ " " + getVertexStr(i+1, y, 1) + "/" + uvs[1]
+					+ " " + getVertexStr(i+1, y+1, 1) + "/" + uvs[2]
+					+ " " + getVertexStr(i, y+1, 1) + "/" + uvs[3]
+				);
+
+
+				//Back face stuff:
+				uvs = unknownUVs;
+				if (b instanceof YarnCell) {
+					labels.push( "ty 0 0 0 0" );
+				} else if (b instanceof LoopCell) {
+					if (b.type === "k") uvs = backKnitUVs;
+					else if (b.type === "t") uvs = backTuckUVs;
+					else if (b.type === "m") {
+						let hasLoop = !(b.ports['v'].length === 0 && b.ports['^'].length === 0);
+						let hasYarn = !(b.ports['-'].length === 0 && b.ports['+'].length === 0);
+						if (hasLoop && hasYarn) uvs = backMissUVs;
+						else if (hasLoop) uvs = yarnlessMissUVs;
+						else if (hasYarn) uvs = looplessMissUVs;
+						else /* TODO: blank faces? */;
+					}
+					if (b.type === "k" || b.type === "t" || b.type === "m") {
+						labels.push( "t" + b.type + " 1 0 1 0" );
+					} else {
+						console.assert(false, "not sure how to label this face: ", b);
+					}
+				} else {
+					console.assert(f instanceof YarnCell ||  b instanceof LoopCell, "must be Yarn or Loop");
+				}
+				faces.push(
+					"f"
+					+ " " + getVertexStr(i, y, -1) + "/" + uvs[0]
+					+ " " + getVertexStr(i+1, y, -1) + "/" + uvs[1]
+					+ " " + getVertexStr(i+1, y+1, -1) + "/" + uvs[2]
+					+ " " + getVertexStr(i, y+1, -1) + "/" + uvs[3]
+				);
+
+
+			}
+		}
+	}
+
+	fs.writeFileSync(objFile, verts.join("\n") + "\n" + uvs.join("\n") + "\n" + faces.join("\n") + "\n" + labels.join("\n") + "\n");
+
+};
+
 
 MeshMachine.prototype.addCells = function MeshMachine_addCells(b, list) {
 	console.assert(b in this.beds, "Wanted valid bed, got '" + b + "'.");
@@ -548,7 +786,7 @@ MeshMachine.prototype.bringCarrier = function MeshMachine_moveCarrier(d, n, cn) 
 				cells.push({i:i, cell:turn});
 			} else if (i < targetIndex) {
 				if (i % 2 === 0) { //loop crossing
-					let miss = new LoopCell('┄');
+					let miss = new LoopCell('m');
 					miss.addOut('-', cn);
 					miss.addOut('+', cn);
 					cells.push({i:i, cell:miss});
@@ -579,7 +817,7 @@ MeshMachine.prototype.bringCarrier = function MeshMachine_moveCarrier(d, n, cn) 
 				cells.push({i:i, cell:turn});
 			} else if (i > targetIndex) {
 				if (i % 2 === 0) { //loop crossing
-					let miss = new LoopCell('┄');
+					let miss = new LoopCell('m');
 					miss.addOut('+', cn);
 					miss.addOut('-', cn);
 					cells.push({i:i, cell:miss});
@@ -760,3 +998,5 @@ const machine = new MeshMachine();
 parseKnitout(fs.readFileSync(knitoutFile, 'utf8'), machine);
 
 machine.dump();
+
+machine.dumpObj(objFile);
