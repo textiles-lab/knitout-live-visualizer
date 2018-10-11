@@ -44,8 +44,8 @@ code.knitout {
 
 <p>Here's some example knitout code:</p>
 
-<canvas class="ShowKnitout" id="show1"></canvas>
-<pre><code class="Knitout" data-target="show1">;!knitout-2
+<canvas class="ShowKnitout" id="show1" data-code="code1"></canvas>
+<pre><code class="Knitout" id="code1">;!knitout-2
 ;;Machine: SWG091N2
 ;;Gauge: 15
 ;;Carriers: 1 2 3 4 5 6 7 8 9 10
@@ -332,13 +332,12 @@ outhook 5
 
 <script src="parseKnitout.js"></script>
 <script src="CellMachine.js"></script>
+<script src="show-knitout.js"></script>
 
 <script>
 
-var code = document.getElementById('code');
-var viz = document.getElementById('viz');
-viz = replaceElement(viz, code.innerText);
-
+var code = document.getElementById('code1');
+var show = document.getElementById('show1');
 
 function readFile(file) {
 	console.log("Attempting to read file: '" + file.name + "'");
@@ -352,7 +351,7 @@ function readFile(file) {
 		reader.onload = function(){
 			if (reader.result != code.innerText) {
 				code.innerText = reader.result;
-				viz = replaceElement(viz, code.innerText);
+				show.showKnitout.reparse();
 			}
 
 			//poll again:
