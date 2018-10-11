@@ -1,0 +1,415 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Test of knitout visualizer (2)</title>
+</head>
+<style>
+code.knitout {
+	display:block;
+	height:10em;
+	overflow:auto;
+	background:#eee;
+	border-radius:5px;
+}
+#dropTarget {
+	position:fixed;
+	left:0;
+	bottom:0;
+	width:100%;
+	height:100%;
+
+	background:#ccc;
+	outline:4px dashed #eee;
+	outline-offset:-20px;
+	z-index:100;
+	visibility:hidden;
+}
+#dropTarget.active {
+	visibility:visible;
+	background:#eee;
+	outline-color:#ccc;
+}
+#file {
+	display:none;
+}
+#fileLabel span {
+	cursor:pointer;
+	text-decoration:underline;
+}
+
+</style>
+<body>
+<input id="file" type="file" />
+<label id="fileLabel" for="file"><span>Choose a knitout file</span> or drag one into the window to visualize it.</label>
+
+<p>Here's some example knitout code:</p>
+
+<canvas class="ShowKnitout" id="show1"></canvas>
+<pre><code class="Knitout" data-target="show1">;!knitout-2
+;;Machine: SWG091N2
+;;Gauge: 15
+;;Carriers: 1 2 3 4 5 6 7 8 9 10
+
+x-stitch-number 85 ;basic tension
+
+inhook 5
+
+tuck - f10 5
+knit - f8 5
+tuck - f6 5
+tuck - f4 5
+knit - f2 5
+miss - f1 5
+
+knit + f1 5
+knit + f3 5
+knit + f5 5
+knit + f7 5
+knit + f9 5
+miss + f10 5
+
+stitch 25 40
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+knit - f4 5
+knit - f3 5
+knit - f2 5
+knit - f1 5
+
+xfer f3 b3
+
+knit + f1 5
+knit + f2 5
+knit + b3 5
+knit + f4 5
+knit + f5 5
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+split - f7 b7 5
+split - f6 b6 5
+knit - f5 5
+knit - f4 5
+knit - b3 5
+knit - f2 5
+knit - f1 5
+
+knit + f1 5
+knit + f2 5
+knit + b3 5
+knit + f4 5
+knit + f5 5
+knit + b6 5
+knit + f6 5
+knit + b7 5
+knit + f7 5
+knit + f8 5
+
+
+xfer f1 b1
+xfer f3 b3
+xfer f5 b5
+
+knit + b1 5
+knit + f2 5
+knit + b3 5
+knit + f4 5
+knit + b5 5
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+xfer b1 f1
+xfer b3 f3
+xfer b5 f5
+
+releasehook 5
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+knit - f4 5
+knit - f3 5
+knit - f2 5
+knit - f1 5
+
+tuck + f1 5
+knit + f2 5
+tuck + f3 5
+knit + f4 5
+tuck + f5 5
+knit + f6 5
+tuck + f7 5
+knit + f8 5
+tuck + f9 5
+knit + f10 5
+
+;move some loops around:
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+knit - f4 5
+knit - f3 5
+knit - f2 5
+knit - f1 5
+
+xfer f2 b2
+xfer f3 b3
+xfer f5 b5
+xfer f6 b6
+
+rack -1
+
+xfer b3 f2
+
+rack 1
+
+xfer b2 f3
+xfer b5 f6
+
+rack -1
+
+xfer b6 f5
+
+rack 0
+
+knit + f1 5
+knit + f2 5
+knit + f3 5
+knit + f4 5
+knit + f5 5
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+;short rows:
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+knit - f4 5
+knit - f3 5
+knit - f2 5
+knit - f1 5
+
+knit + f1 5
+knit + f2 5
+knit + f3 5
+knit + f4 5
+knit + f5 5
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+knit - f4 5
+knit - f3 5
+knit - f2 5
+knit - f1 5
+
+knit + f1 5
+knit + f2 5
+knit + f3 5
+knit + f4 5
+knit + f5 5
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+rack 1
+
+xfer f10 b9
+xfer f9 b8
+xfer f8 b7
+xfer f7 b6
+xfer f6 b5
+
+rack 0
+
+xfer b9 f9
+xfer b8 f8
+xfer b7 f7
+xfer b6 f6
+xfer b5 f5
+
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+knit - f4 5
+knit - f3 5
+knit - f2 5
+knit - f1 5
+
+knit + f1 5
+knit + f2 5
+knit + f3 5
+knit + f4 5
+knit + f5 5
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+knit - f10 5
+knit - f9 5
+knit - f8 5
+knit - f7 5
+knit - f6 5
+knit - f5 5
+knit - f4 5
+knit - f3 5
+knit - f2 5
+knit - f1 5
+
+knit + f1 5
+knit + f2 5
+knit + f3 5
+knit + f4 5
+knit + f5 5
+knit + f6 5
+knit + f7 5
+knit + f8 5
+knit + f9 5
+knit + f10 5
+
+outhook 5
+</code></pre>
+
+<div id="dropTarget"></div>
+
+<script src="parseKnitout.js"></script>
+<script src="CellMachine.js"></script>
+
+<script>
+
+var code = document.getElementById('code');
+var viz = document.getElementById('viz');
+viz = replaceElement(viz, code.innerText);
+
+
+function readFile(file) {
+	console.log("Attempting to read file: '" + file.name + "'");
+
+	var oldSize = 0;
+	var oldCheck = 0;
+
+	function pollFile() {
+		//generate new data:
+		var reader = new FileReader();
+		reader.onload = function(){
+			if (reader.result != code.innerText) {
+				code.innerText = reader.result;
+				viz = replaceElement(viz, code.innerText);
+			}
+
+			//poll again:
+			readFile.pollTimeout = window.setTimeout(pollFile, 5000);
+		};
+		console.log("polling " + file.name);
+		reader.readAsText(file);
+	}
+
+	if ('pollTimeout' in readFile) {
+		window.clearTimeout(readFile.pollTimeout);
+		delete readFile.pollTimeout;
+	}
+	pollFile();
+
+}
+
+var dropTarget = document.getElementById("dropTarget");
+//dragging into the window also loads files:
+dropTarget.addEventListener('dragover', function(evt){
+	dropTarget.classList.add("active");
+	evt.preventDefault();
+	return false;
+});
+dropTarget.addEventListener('dragleave', function(evt){
+	dropTarget.classList.remove("active");
+	evt.preventDefault();
+	return false;
+});
+dropTarget.addEventListener('drop', function(evt){
+	dropTarget.classList.remove("active");
+	try {
+		readFile(evt.dataTransfer.files[0]);
+	} catch (e) {
+		console.log(e);
+	}
+	evt.preventDefault();
+	return false;
+});
+
+//dragging into the window shows the target:
+document.addEventListener('dragover', function(evt){
+	dropTarget.classList.add("active");
+	evt.preventDefault();
+	return false;
+});
+
+var file = document.getElementById("file");
+file.addEventListener('change', function(evt){
+	try {
+		readFile(file.files[0]);
+	} catch (e) {
+		console.log(e);
+	}
+	evt.preventDefault();
+	return false;
+});
+</script>
+
+</body>
