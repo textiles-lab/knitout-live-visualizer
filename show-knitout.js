@@ -260,7 +260,7 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 								]});
 							}
 						}
-						console.log(f,g); //DEBUG
+						//console.log(f,g); //DEBUG
 					} else if (f.type === "t") {
 					} else if (f.type === "m") {
 					} else if (f.type === "s") {

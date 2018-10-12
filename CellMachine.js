@@ -704,8 +704,17 @@ CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuc
 CellMachine.prototype.knit = function CellMachine_knit(d, n, cs) {
 	//build a knit face:
 	let knit = new LoopCell('k');
+	//add loop inputs from the column:
+	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
+	if (c.length) {
+		c[c.length-1].ports['^'].forEach(function (cn) {
+			knit.addOut('v', cn);
+		});
+	}
+
 	cs.forEach(function(cn){
 		knit.addOut((d === '+' ? '-' : '+'), cn);
+		knit.addOut('^', cn);
 		knit.addOut(d, cn);
 	}, this);
 
@@ -715,6 +724,17 @@ CellMachine.prototype.knit = function CellMachine_knit(d, n, cs) {
 CellMachine.prototype.tuck = function CellMachine_tuck(d, n, cs) {
 	//build a tuck face:
 	let tuck = new LoopCell('t');
+
+	//add loop inputs from the column:
+	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
+	//NOTE: need to mind the back-to-front ordering!
+	if (c.length) {
+		c[c.length-1].ports['^'].forEach(function (cn) {
+			tuck.addOut('v', cn);
+			tuck.addOut('^', cn);
+		});
+	}
+
 	cs.forEach(function(cn){
 		tuck.addOut((d === '+' ? '-' : '+'), cn);
 		tuck.addOut(d, cn);
