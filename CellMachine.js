@@ -791,6 +791,7 @@ CellMachine.prototype.tuck = function CellMachine_tuck(d, n, cs) {
 
 	cs.forEach(function(cn){
 		tuck.addOut((d === '+' ? '-' : '+'), cn);
+		tuck.addOut('^', cn);
 		tuck.addOut(d, cn);
 	}, this);
 
@@ -840,7 +841,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 		let c2 = this.beds[needleBed(n2)].getColumn(needleIndex(n2));
 		if (c2.length) {
 			c2[c2.length-1].ports['^'].forEach(function (cn) {
-				xferTo.addOut(toPort, cn);
+				xferTo.addOut('v', cn);
 				xferTo.addOut('^', cn);
 			});
 		}
@@ -855,7 +856,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 			xferFrom.addOut('v', cn);
 			xferFrom.addOut(fromPort, cn);
 			xferTo.addOut(toPort, cn);
-			xferTo.addOut('v', cn);
+			xferTo.addOut('^', cn);
 		});
 	}
 

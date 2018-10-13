@@ -2,9 +2,15 @@
 
 const TileSet = VectorTiles;
 
+const SHOW_FRONT = { front:1.0, back:0.0 };
+const SHOW_BACK = { front:0.0, back:1.0 };
+const SHOW_BOTH = { front:1.0, back:0.5 };
+
 //make a canvas into a knitout visualizer:
 function ShowKnitout(canvas) {
 	canvas.showKnitout = this;
+	canvas.tabIndex = 0;
+
 	this.canvas = canvas;
 	this.ctx = canvas.getContext('2d');
 
@@ -17,6 +23,7 @@ function ShowKnitout(canvas) {
 	this.width = 0.0;
 	this.height = 0.0;
 
+	this.show = SHOW_BOTH;
 
 	this.reparse();
 	this.camera = {
@@ -74,6 +81,35 @@ function ShowKnitout(canvas) {
 		return false;
 	});
 
+	canvas.addEventListener('keydown', function(evt){
+		console.log(evt);
+		if (evt.code === "ShiftLeft" || evt.code === "ShiftRight") {
+			evt.preventDefault();
+			me.show = SHOW_BACK;
+			me.requestDraw();
+			return false;
+		}
+		if (evt.code === "Space") {
+			evt.preventDefault();
+			if (me.hovered) {
+				console.log(me.hovered.tile.src);
+			}
+			me.requestDraw();
+			return false;
+		}
+	});
+
+	canvas.addEventListener('keyup', function(evt){
+		console.log(evt);
+		if (evt.code === "ShiftLeft" || evt.code === "ShiftRight") {
+			evt.preventDefault();
+			me.show = SHOW_BOTH;
+			me.requestDraw();
+			return false;
+		}
+	});
+
+
 }
 
 ShowKnitout.prototype.setCurrentTransform = function ShowKnitout_setCurrentTransform() {
@@ -106,40 +142,89 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	this.setCurrentTransform();
 	ctx.setTransform(...this.currentTransform);
 
-	//draw lines from back bed:
-	for (let row = 0; row < this.rows; ++row) {
-		let y = row * 9.0;
-		for (let col = 0; col < this.columns; ++col) {
-			let x = this.columnX[col];
-			let g = this.grids.b[row * this.columns + col];
-			if (g) {
-				TileSet.draw(ctx, x, y, g);
+	if (this.show.back !== 0.0) {
+		//draw lines from back bed:
+		for (let row = 0; row < this.rows; ++row) {
+			let y = row * 9.0;
+			for (let col = 0; col < this.columns; ++col) {
+				let x = this.columnX[col];
+				let g = this.grids.b[row * this.columns + col];
+				if (g) {
+					TileSet.draw(ctx, x, y, g);
+				}
 			}
+		}
+		if (this.show.back < 1.0) {
+			//fade them slightly:
+			ctx.globalAlpha = 1.0 - this.show.back;
+			ctx.fillStyle = "#888";
+			ctx.fillRect(0,0, w,h);
+			ctx.globalAlpha = 1.0;
 		}
 	}
 
-	//fade them slightly:
-	ctx.globalAlpha = 0.5;
-	ctx.fillStyle = "#888";
-	ctx.fillRect(0,0, w,h);
-	ctx.globalAlpha = 1.0;
-
-
 	//draw lines from front bed:
-	for (let row = 0; row < this.rows; ++row) {
-		let y = row * 9.0;
-		for (let col = 0; col < this.columns; ++col) {
-			let x = this.columnX[col];
-			let g = this.grids.f[row * this.columns + col];
-			if (g) {
-				TileSet.draw(ctx, x, y, g);
+	if (this.show.front !== 0.0) {
+		for (let row = 0; row < this.rows; ++row) {
+			let y = row * 9.0;
+			for (let col = 0; col < this.columns; ++col) {
+				let x = this.columnX[col];
+				let g = this.grids.f[row * this.columns + col];
+				if (g) {
+					TileSet.draw(ctx, x, y, g);
+				}
 			}
 		}
+	}
+	
+	//update selection:
+	let mx = (this.mouse.x - this.currentTransform[4]) / this.currentTransform[0];
+	let my = (this.mouse.y - this.currentTransform[5]) / this.currentTransform[3];
+	this.hovered = null;
+	let row = Math.floor(my / TileSet.TileHeight);
+	if (row >= 0 && row < this.rows && 0 <= mx && mx <= this.width && this.columns) {
+		let col = this.columnX.length - 1;
+		while (col > 0 && this.columnX[col] > mx) --col;
+		if (this.show.front > 0.0) {
+			if (this.grids.f[row * this.columns + col]) {
+				this.hovered = {
+					bed:'f',
+					row:row,
+					col:col,
+					tile:this.grids.f[row * this.columns + col]
+				};
+			}
+		}
+		if (this.show.back > 0.0 && !this.hovered) {
+			if (this.grids.b[row * this.columns + col]) {
+				this.hovered = {
+					bed:'b',
+					row:row,
+					col:col,
+					tile:this.grids.b[row * this.columns + col]
+				};
+			}
+
+		}
+	}
+
+	//draw selection:
+	if (this.hovered) {
+		const x = this.columnX[this.hovered.col];
+		const width = (this.hovered.col + 1 < this.columnX.length ? this.columnX[this.hovered.col+1] : this.width) - x;
+		const y = TileSet.TileHeight * this.hovered.row;
+		const height = TileSet.TileHeight;
+		ctx.beginPath();
+		ctx.moveTo(x,y);
+		ctx.lineTo(x+width,y);
+		ctx.lineTo(x+width,y+height);
+		ctx.lineTo(x,y+height);
+		ctx.closePath();
+		ctx.strokeStyle = (this.hovered.bed === 'f' ? '#fff' : '#ddd');
+		ctx.stroke();
 	}
 
 	//DEBUG: draw mouse:
-	let mx = (this.mouse.x - this.currentTransform[4]) / this.currentTransform[0];
-	let my = (this.mouse.y - this.currentTransform[5]) / this.currentTransform[3];
 	ctx.beginPath();
 	ctx.moveTo(mx - 1.0, my - 1.0);
 	ctx.lineTo(mx + 1.0, my + 1.0);
@@ -276,6 +361,11 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 					const incoming = f.ports['x'];
 					this.grids.f[y * this.columns + (i - minIndex)] =
 						TileSet.makeLoopTile(f.type, 'f', loops, yarns, incoming);
+					if (this.grids.f[y * this.columns + (i - minIndex)]) {
+						this.grids.f[y * this.columns + (i - minIndex)].src = f;
+					} else {
+						console.warn("No tile for", f);
+					}
 				}
 				if (b) {
 					const loops = b.ports['v'];
@@ -283,6 +373,11 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 					const incoming = b.ports['o'];
 					this.grids.b[y * this.columns + (i - minIndex)] =
 						TileSet.makeLoopTile(b.type, 'b', loops, yarns, incoming);
+					if (this.grids.b[y * this.columns + (i - minIndex)]) {
+						this.grids.b[y * this.columns + (i - minIndex)].src = b;
+					} else {
+						console.warn("No tile for", b);
+					}
 				}
 			} else {
 				//yarns:
