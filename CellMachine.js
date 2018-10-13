@@ -509,6 +509,17 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list) {
 		let bed = this.beds[('bed' in icell ? icell.bed : b)];
 		icell.cell.y = y;
 		let column = bed.getColumn(icell.i);
+		if (icell.cell.ports['v'].length) {
+			/*//add misses!
+			while (column.length && column[column.length-1].y + 1 < y) {
+				let empty;
+				if (icell.i % 2 === 0) {
+					empty = new LoopCell('k');
+					column
+				} else {
+				}
+			}*/
+		}
 		if (column.length) {
 			let back = column[column.length-1];
 			if (back.y === y) {
