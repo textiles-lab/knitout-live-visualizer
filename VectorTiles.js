@@ -298,7 +298,6 @@ VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, y
 		g.lines.push({y:'#f0f', pts:[ 0.0, 0.0, 13.0, 9.0 ]});
 		g.lines.push({y:'#f0f', pts:[ 0.0, 9.0, 13.0, 0.0 ]});
 	}
-	console.log(g);
 	return g;
 };
 
@@ -318,7 +317,8 @@ let STYLES = {
 	'1':'#f00',
 	'2':'#0f0',
 	'3':'#800',
-	'4':'#080'
+	'4':'#080',
+	'5':'#afe9af',
 };
 function yarnStyle(y) {
 	if (!(y in STYLES)) {

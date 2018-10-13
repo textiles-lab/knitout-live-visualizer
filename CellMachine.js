@@ -638,6 +638,16 @@ CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) 
 		}
 	}
 
+	cells.forEach(function(icell){
+		let c = this.beds[targetBed].getColumn(icell.i);
+		if (c.length) {
+			c[c.length-1].ports['^'].forEach(function (cn) {
+				icell.cell.addOut('v', cn);
+				icell.cell.addOut('^', cn);
+			});
+		}
+	}, this);
+
 	this.addCells(targetBed, cells);
 
 	c.at = {d:d, n:n};
@@ -736,20 +746,26 @@ CellMachine.prototype.tuck = function CellMachine_tuck(d, n, cs) {
 	//build a tuck face:
 	let tuck = new LoopCell('t');
 
-	//add loop inputs from the column:
-	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
-	//NOTE: need to mind the back-to-front ordering!
-	if (c.length) {
-		c[c.length-1].ports['^'].forEach(function (cn) {
-			tuck.addOut('v', cn);
-			tuck.addOut('^', cn);
-		});
+	function addLoops() {
+		//add loop inputs from the column:
+		let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
+		//NOTE: need to mind the back-to-front ordering!
+		if (c.length) {
+			c[c.length-1].ports['^'].forEach(function (cn) {
+				tuck.addOut('v', cn);
+				tuck.addOut('^', cn);
+			});
+		}
 	}
+
+	if (needleBed(n) === 'b') addLoops.call(this);
 
 	cs.forEach(function(cn){
 		tuck.addOut((d === '+' ? '-' : '+'), cn);
 		tuck.addOut(d, cn);
 	}, this);
+
+	if (needleBed(n) === 'f') addLoops.call(this);
 
 	this.knitTuck(d, n, cs, tuck);
 };
@@ -776,17 +792,45 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 
 	//add a pair of faces:
 	let xferFrom = new LoopCell((cs.length ? 's' : 'x'));
+
 	cs.forEach(function(cn){
 		xferFrom.addOut((d === '+' ? '-' : '+'), cn);
 		xferFrom.addOut(d, cn);
-		//TODO: loop connections?
 	}, this);
+
 	cells.push({i:needleIndex(n), cell:xferFrom});
 
 	let xferTo = new LoopCell((cs.length ? 'S' : 'X'));
-	//TODO: loop connections?
 	cells.push({bed:needleBed(n2), i:needleIndex(n2), cell:xferTo});
 
+	let fromPort = (needleBed(n) === 'f' ? 'x' : 'o');
+	let toPort = (needleBed(n) === 'f' ? 'o' : 'x');
+
+	function addToLoops() {
+		//add loops under the target:
+		let c2 = this.beds[needleBed(n2)].getColumn(needleIndex(n2));
+		if (c2.length) {
+			c2[c2.length-1].ports['^'].forEach(function (cn) {
+				xferTo.addOut(toPort, cn);
+				xferTo.addOut('^', cn);
+			});
+		}
+	}
+
+	if (needleBed(n2) === 'b') addToLoops.call(this);
+
+	//add loop connections from the column:
+	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
+	if (c.length) {
+		c[c.length-1].ports['^'].forEach(function (cn) {
+			xferFrom.addOut('v', cn);
+			xferFrom.addOut(fromPort, cn);
+			xferTo.addOut(toPort, cn);
+			xferTo.addOut('v', cn);
+		});
+	}
+
+	if (needleBed(n2) === 'f') addToLoops.call(this);
 
 	//turn carriers back up:
 	if (cs.length) {

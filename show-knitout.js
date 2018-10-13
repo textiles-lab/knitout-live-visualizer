@@ -17,8 +17,8 @@ function ShowKnitout(canvas) {
 	this.width = 0.0;
 	this.height = 0.0;
 
-	//this.reparse();
-	this.showTiles(); //DEBUG
+	this.reparse();
+	//this.showTiles(); //DEBUG
 }
 
 ShowKnitout.prototype.draw = function ShowKnitout_draw() {
@@ -41,6 +41,25 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	const scale = Math.min(w / this.width, h / this.height);
 
 	ctx.setTransform(scale,0, 0,-scale, 0.5*w-0.5*scale*this.width,0.5*h+0.5*scale*this.height);
+
+	//draw lines from back bed:
+	for (let row = 0; row < this.rows; ++row) {
+		let y = row * 9.0;
+		for (let col = 0; col < this.columns; ++col) {
+			let x = this.columnX[col];
+			let g = this.grids.b[row * this.columns + col];
+			if (g) {
+				TileSet.draw(ctx, x, y, g);
+			}
+		}
+	}
+
+	//fade them slightly:
+	ctx.globalAlpha = 0.5;
+	ctx.fillStyle = "#888";
+	ctx.fillRect(0,0, w,h);
+	ctx.globalAlpha = 1.0;
+
 
 	//draw lines from front bed:
 	for (let row = 0; row < this.rows; ++row) {
