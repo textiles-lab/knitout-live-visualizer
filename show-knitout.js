@@ -17,9 +17,74 @@ function ShowKnitout(canvas) {
 	this.width = 0.0;
 	this.height = 0.0;
 
+
 	this.reparse();
+	this.camera = {
+		x: 0.5 * this.width,
+		y: 0.5 * this.height,
+		portion: 1.0 //view 'portion' portion of item along shortest axis
+	};
+
 	//this.showTiles(); //DEBUG
+
+	this.mouse = {
+		x:NaN,
+		y:NaN
+	};
+
+	const me = this;
+	canvas.addEventListener('mousemove', function(evt){
+		evt.preventDefault();
+		var rect = canvas.getBoundingClientRect();
+		let oldX = me.mouse.x;
+		let oldY = me.mouse.y;
+		me.mouse.x = ( (evt.clientX - rect.left) / rect.width * canvas.width );
+		me.mouse.y = ( (evt.clientY - rect.top) / rect.height * canvas.height );
+
+		if (evt.buttons & 1) {
+			let deltaX = me.mouse.x - oldX;
+			let deltaY = me.mouse.y - oldY;
+			if (me.currentTransform && deltaX === deltaX && deltaY === deltaY) {
+				me.camera.x -= deltaX / me.currentTransform[0];
+				me.camera.y -= deltaY / me.currentTransform[3];
+			}
+		}
+
+		me.requestDraw();
+		return false;
+	});
+	canvas.addEventListener('wheel', function(evt){
+		evt.preventDefault();
+
+		let oldX = (me.mouse.x - me.currentTransform[4]) / me.currentTransform[0];
+		let oldY = (me.mouse.y - me.currentTransform[5]) / me.currentTransform[3];
+
+		me.camera.portion *= Math.pow(0.5, -evt.deltaY / 300.0);
+
+		me.setCurrentTransform();
+
+		let newX = (me.mouse.x - me.currentTransform[4]) / me.currentTransform[0];
+		let newY = (me.mouse.y - me.currentTransform[5]) / me.currentTransform[3];
+
+		me.camera.x += (oldX - newX);
+		me.camera.y += (oldY - newY);
+
+		me.requestDraw();
+
+		return false;
+	});
+
 }
+
+ShowKnitout.prototype.setCurrentTransform = function ShowKnitout_setCurrentTransform() {
+	let rect = this.canvas.getBoundingClientRect();
+	const w = Math.round(rect.width * window.devicePixelRatio);
+	const h = Math.round(rect.height * window.devicePixelRatio);
+
+	const scale = Math.min(w / (this.camera.portion * this.width), h / (this.camera.portion * this.height));
+
+	this.currentTransform = [scale,0, 0,-scale, 0.5*w-scale*this.camera.x, 0.5*h+scale*this.camera.y];
+};
 
 ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	//handle resizing:
@@ -38,9 +103,8 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	ctx.fillRect(0,0, w,h);
 
 	//scale to show whole grid:
-	const scale = Math.min(w / this.width, h / this.height);
-
-	ctx.setTransform(scale,0, 0,-scale, 0.5*w-0.5*scale*this.width,0.5*h+0.5*scale*this.height);
+	this.setCurrentTransform();
+	ctx.setTransform(...this.currentTransform);
 
 	//draw lines from back bed:
 	for (let row = 0; row < this.rows; ++row) {
@@ -73,6 +137,17 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		}
 	}
 
+	//DEBUG: draw mouse:
+	let mx = (this.mouse.x - this.currentTransform[4]) / this.currentTransform[0];
+	let my = (this.mouse.y - this.currentTransform[5]) / this.currentTransform[3];
+	ctx.beginPath();
+	ctx.moveTo(mx - 1.0, my - 1.0);
+	ctx.lineTo(mx + 1.0, my + 1.0);
+	ctx.moveTo(mx - 1.0, my + 1.0);
+	ctx.lineTo(mx + 1.0, my - 1.0);
+	ctx.lineWidth = 1.0;
+	ctx.strokeStyle = '#fff';
+	ctx.stroke();
 
 };
 

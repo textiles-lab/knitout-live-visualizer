@@ -303,13 +303,35 @@ VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, y
 
 VectorTiles.makeYarnTile = function VectorTiles_makeYarnTile(type, bed, ports) {
 	let g = {lines:[]};
-	/*if (ports.length === 0 && loops.length === 0) {
-		//empty
-	} else*/ {
-		//unknown!
-		g.lines.push({y:'#f0f', pts:[ 0.0, 0.0, 4.0, 9.0 ]});
-		g.lines.push({y:'#f0f', pts:[ 0.0, 9.0, 4.0, 0.0 ]});
+	let locs = {};
+	function addLoc(yarn, x, y) {
+		if (!(yarn in locs)) {
+			locs[yarn] = [];
+		}
+		locs[yarn].push(x,y);
 	}
+	ports['^'].forEach(function(y){ addLoc(y, 2.0, 9.0); });
+	ports['v'].forEach(function(y){ addLoc(y, 2.0, 0.0); });
+	ports['-'].forEach(function(y, yi){ addLoc(y, 0.0, (yi === 0 ? 4.5 : 3.5)); });
+	ports['+'].forEach(function(y, yi){ addLoc(y, 4.0, (yi === 0 ? 4.5 : 3.5)); });
+	ports['o'].forEach(function(y){ addLoc(y, 2.0, 6.5); });
+	ports['x'].forEach(function(y){ addLoc(y, 2.0, 6.5); });
+
+	for (let yn in locs) {
+		let list = locs[yn];
+		if (list.length === 2) {
+			g.lines.push({y:yn, pts:[
+				2.0, 5.5, list[0], list[1]
+			]});
+		} else if (list.length === 4) {
+			g.lines.push({y:yn, pts:[
+				list[0], list[1], list[2], list[3]
+			]});
+		} else {
+			console.warn("yarn tile mentions yarn " + list.length + " times.");
+		}
+	}
+
 	return g;
 };
 

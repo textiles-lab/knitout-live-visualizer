@@ -92,6 +92,19 @@ YarnCell.prototype.canAbsorb = function YarnCell_canAbsorb(below) {
 	//NOTE: doesn't take into account yarn starts! (Though I'm not 100% sure there is a way for this to go wrong.)
 	//NOTE: doesn't take into account yarns crossing themselves! (Again, not sure this ever happens.)
 
+	//DEBUG:
+	let counts = {};
+	for (let pn in this.ports) {
+		this.ports[pn].forEach(function(yn){
+			if (!(yn in counts)) counts[yn] = 0;
+			counts[yn] += 1;
+		});
+	}
+	for (let yn in counts) {
+		console.assert(counts[yn] <= 2, "Yarn appears more than twice (" + counts[yn] + " times) in cell before merge: ", this);
+	}
+
+
 	//Don't collapse if in/out ports overlap:
 	if (below.ports['-'].length && this.ports['-'].length) return false;
 	if (below.ports['+'].length && this.ports['+'].length) return false;
@@ -139,6 +152,19 @@ YarnCell.prototype.absorb = function YarnCell_absorb(below) {
 	this.ports['-'].push(...below.ports['-']);
 	this.ports['x'].push(...below.ports['x']);
 	this.ports['o'].push(...below.ports['o']);
+
+	//DEBUG:
+	let counts = {};
+	for (let pn in this.ports) {
+		this.ports[pn].forEach(function(yn){
+			if (!(yn in counts)) counts[yn] = 0;
+			counts[yn] += 1;
+		});
+	}
+	for (let yn in counts) {
+		console.assert(counts[yn] <= 2, "Yarn appears more than twice (" + counts[yn] + " times) in merged cell: ", this);
+	}
+
 };
 
 YarnCell.prototype.desc = function YarnCell_desc() {
@@ -639,9 +665,12 @@ CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) 
 	}
 
 	cells.forEach(function(icell){
-		let c = this.beds[targetBed].getColumn(icell.i);
+		let bed = (icell.bed ? icell.bed : targetBed);
+		let c = this.beds[bed].getColumn(icell.i);
 		if (c.length) {
 			c[c.length-1].ports['^'].forEach(function (cn) {
+				if (icell.cell.ports['v'].indexOf(cn) !== -1) return; //accounted for already.
+				//TODO: if bed === 'b', add at begin of ports
 				icell.cell.addOut('v', cn);
 				icell.cell.addOut('^', cn);
 			});
