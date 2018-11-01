@@ -19,6 +19,7 @@ function ShowKnitout(canvas) {
 	this.columns = 0;
 	this.rows = 0;
 	this.grids = { b:[], f:[] };
+	this.crosses = []; //crossing yarn fragments
 	this.columnX = [];
 	this.width = 0.0;
 	this.height = 0.0;
@@ -142,6 +143,7 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	this.setCurrentTransform();
 	ctx.setTransform(...this.currentTransform);
 
+
 	if (this.show.back !== 0.0) {
 		//draw lines from back bed:
 		for (let row = 0; row < this.rows; ++row) {
@@ -163,6 +165,10 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		}
 	}
 
+	this.crosses.forEach(function(cross){
+		TileSet.draw(ctx, 0, 0, cross); //slightly a hack
+	});
+
 	//draw lines from front bed:
 	if (this.show.front !== 0.0) {
 		for (let row = 0; row < this.rows; ++row) {
@@ -175,6 +181,15 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 				}
 			}
 		}
+	}
+
+	if (this.hovered) {
+		let x = this.columnX[this.hovered.col];
+		let w = (this.hovered.col+1 < this.columnX.length ? this.columnX[this.hovered.col+1] : this.width) - x;
+		ctx.globalAlpha = 0.1;
+		ctx.fillStyle = '#fff';
+		ctx.fillRect(x,0, w,this.height);
+		ctx.globalAlpha = 1.0;
 	}
 	
 	//update selection:
@@ -253,6 +268,7 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 	this.columns = 0;
 	this.rows = 0;
 	this.grids = { b:[], f:[] };
+	this.crosses = []; //crossing yarn fragments
 	this.columnX = [];
 	this.width = 0.0;
 	this.height = 0.0;
@@ -310,6 +326,7 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 	this.columns = 0;
 	this.rows = 0;
 	this.grids = { b:[], f:[] };
+	this.crosses = [];
 	this.columnX = [];
 	this.width = 0.0;
 	this.height = 0.0;
@@ -394,6 +411,12 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 	}
 	this.width = x;
 	this.height = this.rows * TileSet.TileHeight;
+
+	//fill crosses from machine's crosses:
+	machine.crosses.forEach(function(cross){
+		this.crosses.push(TileSet.makeCross(cross.type, this.columnX[cross.i-minIndex], this.columnX[cross.i2-minIndex], TileSet.TileHeight * cross.y, cross.yarns));
+	}, this);
+
 };
 
 //Find all "ShowKnitout" canvases, and attach a ShowKnitout object:

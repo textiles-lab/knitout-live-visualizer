@@ -18,6 +18,33 @@ VectorTiles.TileHeight = 9.0;
 // 1 . A A A A . . . A A A A .
 // 0 . . B B A B . B A B B . .
 
+VectorTiles.makeCross = function VectorTiles_makeCross(type, x, x2, y, yarns) {
+	console.log(arguments);
+	let l,r;
+	let y1 = 5.5;
+	let y2 = 6.5;
+	if (type === 'x') {
+		l = 4.5;
+		r = 8.5;
+	} else if (type === 's') {
+		l = 4.5;
+		r = 8.5;
+	} else {
+		console.assert(false, "Unknown cross type.");
+	}
+	let g = {lines:[]};
+	if (yarns.length >= 1) {
+		let l0 = yarns[0];
+		g.lines.push({y:l0, pts:[x+l, y+y1, x2+l, y+y2 ]});
+		g.lines.push({y:l0, pts:[x+r, y+y1, x2+r, y+y2 ]});
+	}
+	if (yarns.length >= 2) {
+		let l1 = yarns.slice(1).join(' ');
+		g.lines.push({y:l1, pts:[x+l+1.0, y+y1, x2+l+1.0, y+y2 ]});
+		g.lines.push({y:l1, pts:[x+r-1.0, y+y1, x2+r-1.0, y+y2 ]});
+	}
+	return g;
+};
 
 VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, yarns, across) {
 	if (loops.length === 0 && yarns.length === 0 && across.length === 0) return null;
@@ -284,13 +311,13 @@ VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, y
 		//TO CHECK: across === loops, right?
 		if (across.length >= 1) {
 			let a0 = across[0];
-			g.lines.push({y:a0, pts:[ 4.5, 0.0, 4.5, 6.5 ]});
-			g.lines.push({y:a0, pts:[ 8.5, 0.0, 8.5, 6.5 ]});
+			g.lines.push({y:a0, pts:[ 4.5, 0.0, 4.5, 5.5 ]});
+			g.lines.push({y:a0, pts:[ 8.5, 0.0, 8.5, 5.5 ]});
 
 			if (across.length >= 2) {
 				let a1 = across.slice(1).join(' ');
-				g.lines.push({y:a1, pts:[ 5.5, 0.0, 5.5, 6.5 ]});
-				g.lines.push({y:a1, pts:[ 7.5, 0.0, 7.5, 6.5 ]});
+				g.lines.push({y:a1, pts:[ 5.5, 0.0, 5.5, 5.5 ]});
+				g.lines.push({y:a1, pts:[ 7.5, 0.0, 7.5, 5.5 ]});
 			}
 		}
 	} else {

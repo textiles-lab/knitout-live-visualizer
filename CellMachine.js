@@ -219,6 +219,7 @@ function CellMachine() {
 		b:new Columns(),
 		f:new Columns()
 	};
+	this.crosses = []; //<-- yarn crossings between beds
 	this.topRow = 0;
 };
 
@@ -512,11 +513,34 @@ CellMachine.prototype.dumpObj = function CellMachine_dumpObj(objFile) {
 	return verts.join("\n") + "\n" + uvs.join("\n") + "\n" + faces.join("\n") + "\n" + labels.join("\n") + "\n";
 };
 
-
-CellMachine.prototype.addCells = function CellMachine_addCells(b, list) {
+CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 	console.assert(b in this.beds, "Wanted valid bed, got '" + b + "'.");
 
 	let y = this.topRow;
+
+	if (typeof(cross) !== 'undefined') {
+		let bi, fi;
+		if (cross.b === 'b' && cross.b2 === 'f') {
+			bi = cross.i; fi = cross.i2;
+		} else { console.assert(cross.b === 'f' && cross.b2 === 'b', "must cross f <-> b");
+			fi = cross.i; bi = cross.i2;
+		}
+		this.crosses.some(function(cross2){
+			if (cross2.y < y) return true; //early out when reach earlier portion of list
+			let bi2, fi2;
+			if (cross2.b === 'b' && cross2.b2 === 'f') {
+				bi2 = cross2.i; fi2 = cross2.i2;
+			} else { console.assert(cross2.b === 'f' && cross2.b2 === 'b', "must cross f <-> b");
+				fi2 = cross2.i; bi2 = cross2.i2;
+			}
+
+			if (fi < fi2 && bi < bi2) return;
+			if (fi > fi2 && bi > bi2) return;
+
+			y = cross2.y + 1;
+		});
+	}
+
 	list.forEach(function(icell){
 		let bed = this.beds[('bed' in icell ? icell.bed : b)];
 		let column = bed.getColumn(icell.i);
@@ -557,6 +581,12 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list) {
 	}, this);
 
 	this.topRow = y;
+
+	if (typeof(cross) !== 'undefined') {
+		cross.y = y;
+		console.log(cross.b + cross.i + " -> " + cross.b2 + cross.i2 + " @ " + cross.y + " " + JSON.stringify(cross.yarns));
+		this.crosses.unshift(cross); //keep list sorted in descending order
+	}
 };
 
 CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) {
@@ -836,6 +866,14 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 	let fromPort = (needleBed(n) === 'f' ? 'x' : 'o');
 	let toPort = (needleBed(n) === 'f' ? 'o' : 'x');
 
+	const cross = {
+		yarns:[],
+		b:needleBed(n), i:needleIndex(n),
+		b2:needleBed(n2), i2:needleIndex(n2),
+		type:(cs.length === 0 ? 'x' : 's')
+	};
+	console.assert('i' in cross && 'i2' in cross, "cross should have indices for from and to");
+
 	function addToLoops() {
 		//add loops under the target:
 		let c2 = this.beds[needleBed(n2)].getColumn(needleIndex(n2));
@@ -857,6 +895,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 			xferFrom.addOut(fromPort, cn);
 			xferTo.addOut(toPort, cn);
 			xferTo.addOut('^', cn);
+			cross.yarns.push(cn); //<-- add yarn to crossing
 		});
 	}
 
@@ -875,8 +914,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 		cells.push({i:yarnAfterIndex(d, n), cell:turn});
 	}
 
-	this.addCells(needleBed(n), cells);
-
+	this.addCells(needleBed(n), cells, cross);
 };
 
 CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
