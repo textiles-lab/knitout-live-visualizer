@@ -18,8 +18,7 @@ VectorTiles.TileHeight = 9.0;
 // 1 . A A A A . . . A A A A .
 // 0 . . B B A B . B A B B . .
 
-VectorTiles.makeCross = function VectorTiles_makeCross(type, x, x2, y, yarns) {
-	console.log(arguments);
+VectorTiles.makeCross = function VectorTiles_makeCross(type, x, x2, y, yarns, colors) {
 	let l,r;
 	let y1 = 5.5;
 	let y2 = 6.5;
@@ -27,12 +26,12 @@ VectorTiles.makeCross = function VectorTiles_makeCross(type, x, x2, y, yarns) {
 		l = 4.5;
 		r = 8.5;
 	} else if (type === 's') {
-		l = 4.5;
-		r = 8.5;
+		l = 1.5;
+		r = 11.5;
 	} else {
 		console.assert(false, "Unknown cross type.");
 	}
-	let g = {lines:[]};
+	let g = {lines:[], colors:colors};
 	if (yarns.length >= 1) {
 		let l0 = yarns[0];
 		g.lines.push({y:l0, pts:[x+l, y+y1, x2+l, y+y2 ]});
@@ -46,7 +45,7 @@ VectorTiles.makeCross = function VectorTiles_makeCross(type, x, x2, y, yarns) {
 	return g;
 };
 
-VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, yarns, across) {
+VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, yarns, across, colors) {
 	if (loops.length === 0 && yarns.length === 0 && across.length === 0) return null;
 
 	function doLoops() {
@@ -62,7 +61,7 @@ VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, y
 		}
 	};
 
-	let g = {lines:[]};
+	let g = {lines:[], colors:colors};
 	if (type === 'k') {
 		if (yarns.length >= 1 && loops.length >= 1) {
 			//actually a knit:
@@ -207,17 +206,17 @@ VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, y
 			if (bed === 'f') {
 				let l0 = loops[0];
 				g.lines.push({y:l0, pts:[
-					4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, 6.5,
+					4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, 5.5,
 				]});
 				g.lines.push({y:l0, pts:[
-					11.5, 6.5, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0
+					11.5, 5.5, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0
 				]});
 				if (loops.length >= 2) {
 					let l1 = loops.slice(1).join(' ');
 					g.lines.push({y:l1, pts:[ 5.5, 0.0, 5.5, 0.5 ]});
 					g.lines.push({y:l1, pts:[ 3.5, 0.5, 2.5, 0.5 ]});
-					g.lines.push({y:l1, pts:[ 2.5, 2.5, 2.5, 6.5 ]});
-					g.lines.push({y:l1, pts:[ 10.5, 6.5, 10.5, 2.5 ]});
+					g.lines.push({y:l1, pts:[ 2.5, 2.5, 2.5, 5.5 ]});
+					g.lines.push({y:l1, pts:[ 10.5, 5.5, 10.5, 2.5 ]});
 					g.lines.push({y:l1, pts:[ 10.5, 0.5, 9.5, 0.5 ]});
 					g.lines.push({y:l1, pts:[ 7.5, 0.5, 7.5, 0.0 ]});
 				}
@@ -240,16 +239,16 @@ VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, y
 				let h = (yarns.length === 1 ? 3.5 : 2.5);
 				let l0 = loops[0];
 				g.lines.push({y:l0, pts:[ 4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, h ]});
-				g.lines.push({y:l0, pts:[ 1.5, 5.5, 1.5, 6.5 ]});
-				g.lines.push({y:l0, pts:[ 11.5, 6.5, 11.5, 5.5 ]});
+				g.lines.push({y:l0, pts:[ 1.5, 5.5, 1.5, 5.5 ]});
+				g.lines.push({y:l0, pts:[ 11.5, 5.5, 11.5, 5.5 ]});
 				g.lines.push({y:l0, pts:[ 11.5, h, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0 ]});
 				if (loops.length >= 2) {
 					let l1 = loops.slice(1).join(' ');
 					g.lines.push({y:l1, pts:[ 5.5, 0.0, 5.5, 0.5 ]});
 					g.lines.push({y:l1, pts:[ 3.5, 0.5, 2.5, 0.5 ]});
 					g.lines.push({y:l1, pts:[ 2.5, 2.5, 2.5, h ]});
-					g.lines.push({y:l1, pts:[ 2.5, 5.5, 2.5, 6.5 ]});
-					g.lines.push({y:l1, pts:[ 10.5, 6.5, 10.5, 5.5 ]});
+					g.lines.push({y:l1, pts:[ 2.5, 5.5, 2.5, 5.5 ]});
+					g.lines.push({y:l1, pts:[ 10.5, 5.5, 10.5, 5.5 ]});
 					g.lines.push({y:l1, pts:[ 10.5, h, 10.5, 2.5 ]});
 					g.lines.push({y:l1, pts:[ 10.5, 0.5, 9.5, 0.5 ]});
 					g.lines.push({y:l1, pts:[ 7.5, 0.5, 7.5, 0.0 ]});
@@ -328,8 +327,8 @@ VectorTiles.makeLoopTile = function VectorTiles_makeLoopTile(type, bed, loops, y
 	return g;
 };
 
-VectorTiles.makeYarnTile = function VectorTiles_makeYarnTile(type, bed, ports) {
-	let g = {lines:[]};
+VectorTiles.makeYarnTile = function VectorTiles_makeYarnTile(type, bed, ports, colors) {
+	let g = {lines:[], colors:colors};
 	let locs = {};
 	function addLoc(yarn, x, y) {
 		if (!(yarn in locs)) {
@@ -369,7 +368,10 @@ let STYLES = {
 	'4':'#080',
 	'5':'#afe9af',
 };
-function yarnStyle(y) {
+function yarnStyle(y, colors) {
+	if (y in colors) {
+		return colors[y];
+	}
 	if (!(y in STYLES)) {
 		STYLES[y] = '#f0f';
 	}
@@ -386,7 +388,7 @@ VectorTiles.draw = function VectorTiles_draw(ctx, x, y, tile) {
 			ctx.lineTo(pts[i] + x, pts[i+1] + y);
 		}
 		ctx.strokeWidth = 1.0;
-		ctx.strokeStyle = yarnStyle(l.y);
+		ctx.strokeStyle = yarnStyle(l.y, tile.colors, tile.bed);
 		ctx.stroke();
 	});
 };

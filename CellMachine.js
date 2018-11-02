@@ -221,6 +221,7 @@ function CellMachine() {
 	};
 	this.crosses = []; //<-- yarn crossings between beds
 	this.topRow = 0;
+	this.colors = {}; //<-- space-separated carrier sets => colors
 };
 
 //Helpers:
@@ -558,6 +559,7 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 	list.forEach(function(icell){
 		let bed = this.beds[('bed' in icell ? icell.bed : b)];
 		icell.cell.y = y;
+		icell.cell.colors = this.colors;
 		let column = bed.getColumn(icell.i);
 		if (icell.cell.ports['v'].length) {
 			/*//add misses!
@@ -584,7 +586,8 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 
 	if (typeof(cross) !== 'undefined') {
 		cross.y = y;
-		console.log(cross.b + cross.i + " -> " + cross.b2 + cross.i2 + " @ " + cross.y + " " + JSON.stringify(cross.yarns));
+		cross.colors = this.colors;
+		//DEBUG: console.log(cross.b + cross.i + " -> " + cross.b2 + cross.i2 + " @ " + cross.y + " " + JSON.stringify(cross.yarns));
 		this.crosses.unshift(cross); //keep list sorted in descending order
 	}
 };
@@ -922,6 +925,31 @@ CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
 };
 
 CellMachine.prototype.pause = function CellMachine_pause() { /* nothing */ };
+
+CellMachine.prototype.getColor = function(cs) {
+	let key = cs.join(' ');
+	if (key in this.colors) return this.colors[key];
+	else return null;
+};
+
+CellMachine.prototype['x-vis-color'] = function Cellmachine_x_vis_color(args) {
+	let toks = Array.from(arguments);
+	let color = toks.shift();
+	let cs = toks;
+	let key = cs.join(' ');
+
+	//colors gets copied before update (so that cells can reference colors at their moment of creation):
+	let oldColors = this.colors;
+	this.colors = {};
+	Object.assign(this.colors, oldColors);
+
+	//update colors:
+	if (color === 'auto') {
+		delete this.colors[key];
+	} else {
+		this.colors[key] = color;
+	}
+};
 
 if (typeof(module) !== "undefined") {
 	module.exports.CellMachine = CellMachine;

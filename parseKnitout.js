@@ -175,12 +175,14 @@ function parseKnitout(codeText, machine) {
 				machine.pause();
 			} else if (op === "x-end") {
 				end = true;
-			} else {
-				if (op.startsWith("x-")) {
-					addWarning("Unrecognized extension operation '" + op + "'.");
+			} else if (op.startsWith("x-")) {
+				if (op in machine) {
+					machine[op](...tokens);
 				} else {
-					addError("Unrecognized operation.");
+					addWarning("Unrecognized extension operation '" + op + "'.");
 				}
+			} else {
+				addError("Unrecognized operation.");
 			}
 		} catch (e) {
 			if (typeof(e) === "string") {

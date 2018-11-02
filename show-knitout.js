@@ -144,30 +144,38 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	ctx.setTransform(...this.currentTransform);
 
 
-	if (this.show.back !== 0.0) {
-		//draw lines from back bed:
-		for (let row = 0; row < this.rows; ++row) {
-			let y = row * 9.0;
-			for (let col = 0; col < this.columns; ++col) {
-				let x = this.columnX[col];
-				let g = this.grids.b[row * this.columns + col];
-				if (g) {
-					TileSet.draw(ctx, x, y, g);
-				}
+	//draw lines from back bed:
+	for (let row = 0; row < this.rows; ++row) {
+		let y = row * 9.0;
+		for (let col = 0; col < this.columns; ++col) {
+			let x = this.columnX[col];
+			let g = this.grids.b[row * this.columns + col];
+			if (g) {
+				TileSet.draw(ctx, x, y, g);
 			}
-		}
-		if (this.show.back < 1.0) {
-			//fade them slightly:
-			ctx.globalAlpha = 1.0 - this.show.back;
-			ctx.fillStyle = "#888";
-			ctx.fillRect(0,0, w,h);
-			ctx.globalAlpha = 1.0;
 		}
 	}
 
+	//fade back slightly:
+	ctx.setTransform(1,0, 0,1, 0,0);
+	ctx.globalAlpha = 0.2;
+	ctx.fillStyle = "#888";
+	ctx.fillRect(0,0, w,h);
+	ctx.globalAlpha = 1.0;
+	ctx.setTransform(...this.currentTransform);
+
+	//draw middle (crossing) lines:
 	this.crosses.forEach(function(cross){
 		TileSet.draw(ctx, 0, 0, cross); //slightly a hack
 	});
+
+	//fade middle slightly:
+	ctx.setTransform(1,0, 0,1, 0,0);
+	ctx.globalAlpha = 0.2;
+	ctx.fillStyle = "#888";
+	ctx.fillRect(0,0, w,h);
+	ctx.globalAlpha = 1.0;
+	ctx.setTransform(...this.currentTransform);
 
 	//draw lines from front bed:
 	if (this.show.front !== 0.0) {
@@ -305,7 +313,7 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 				across = loops;
 			}
 			//if (type === 'x' && yarns.length !== 0) continue;
-			this.grids.f[row * this.columns + col] = TileSet.makeLoopTile(type, bed, loops, yarns, across);
+			this.grids.f[row * this.columns + col] = TileSet.makeLoopTile(type, bed, loops, yarns, across, {});
 		}
 	}
 };
@@ -377,7 +385,7 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 					const yarns = f.ports['+'];
 					const incoming = f.ports['x'];
 					this.grids.f[y * this.columns + (i - minIndex)] =
-						TileSet.makeLoopTile(f.type, 'f', loops, yarns, incoming);
+						TileSet.makeLoopTile(f.type, 'f', loops, yarns, incoming, f.colors);
 					if (this.grids.f[y * this.columns + (i - minIndex)]) {
 						this.grids.f[y * this.columns + (i - minIndex)].src = f;
 					} else {
@@ -389,7 +397,7 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 					const yarns = b.ports['+'];
 					const incoming = b.ports['o'];
 					this.grids.b[y * this.columns + (i - minIndex)] =
-						TileSet.makeLoopTile(b.type, 'b', loops, yarns, incoming);
+						TileSet.makeLoopTile(b.type, 'b', loops, yarns, incoming, b.colors);
 					if (this.grids.b[y * this.columns + (i - minIndex)]) {
 						this.grids.b[y * this.columns + (i - minIndex)].src = b;
 					} else {
@@ -400,11 +408,11 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 				//yarns:
 				if (f) {
 					this.grids.f[y * this.columns + (i - minIndex)] =
-						TileSet.makeYarnTile(f.type, 'f', f.ports);
+						TileSet.makeYarnTile(f.type, 'f', f.ports, f.colors);
 				}
 				if (b) {
 					this.grids.b[y * this.columns + (i - minIndex)] =
-						TileSet.makeYarnTile(b.type, 'b', b.ports);
+						TileSet.makeYarnTile(b.type, 'b', b.ports, b.colors);
 				}
 			}
 		}
@@ -414,7 +422,7 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 
 	//fill crosses from machine's crosses:
 	machine.crosses.forEach(function(cross){
-		this.crosses.push(TileSet.makeCross(cross.type, this.columnX[cross.i-minIndex], this.columnX[cross.i2-minIndex], TileSet.TileHeight * cross.y, cross.yarns));
+		this.crosses.push(TileSet.makeCross(cross.type, this.columnX[cross.i-minIndex], this.columnX[cross.i2-minIndex], TileSet.TileHeight * cross.y, cross.yarns, cross.colors));
 	}, this);
 
 };
