@@ -561,16 +561,41 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 		icell.cell.y = y;
 		icell.cell.colors = this.colors;
 		let column = bed.getColumn(icell.i);
-		if (icell.cell.ports['v'].length) {
-			/*//add misses!
-			while (column.length && column[column.length-1].y + 1 < y) {
-				let empty;
-				if (icell.i % 2 === 0) {
-					empty = new LoopCell('k');
-					column
-				} else {
+		//Add empty cells to hold trailing loops/yarns:
+		if (icell.i % 2 === 0) {
+			let cs = icell.cell.ports['v'];
+			if (cs.length) {
+				//had better be exactly the same stack from below:
+				console.assert(column.length && JSON.stringify(column[column.length-1].ports['^']) === JSON.stringify(cs), "loops out should always be exactly loops in.");
+				while (column[column.length-1].y + 1 < y) {
+					let empty = new LoopCell('m');
+					empty.y = column[column.length-1].y + 1;
+					cs.forEach(function (cn) {
+						empty.addOut('v', cn);
+						empty.addOut('^', cn);
+					});
+					empty.colors = column[column.length-1].colors;
+					column.push(empty);
 				}
-			}*/
+			}
+		} else {
+			//TODO: misses for *yarn*
+			let cs = icell.cell.ports['v'];
+			if (cs.length) {
+				//had better be exactly the same stack from below:
+				console.assert(column.length && JSON.stringify(column[column.length-1].ports['^']) === JSON.stringify(cs), "yarn out should always be exactly yarn in.");
+				while (column[column.length-1].y + 1 < y) {
+					let empty = new YarnCell();
+					empty.y = column[column.length-1].y + 1;
+					cs.forEach(function (cn) {
+						empty.addOut('v', cn);
+						empty.addOut('^', cn);
+					});
+					empty.colors = column[column.length-1].colors;
+					column.push(empty);
+				}
+			}
+
 		}
 		if (column.length) {
 			let back = column[column.length-1];
