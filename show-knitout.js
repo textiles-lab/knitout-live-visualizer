@@ -16,20 +16,15 @@ function ShowKnitout(canvas) {
 
 	this.code = document.getElementById(canvas.dataset.code);
 
-	this.columns = 0;
-	this.rows = 0;
-	this.grids = { b:[], f:[] };
-	this.crosses = []; //crossing yarn fragments
-	this.columnX = [];
-	this.width = 0.0;
-	this.height = 0.0;
+	//these are used to do stitch selection and view panning:
+	this.clearDrawing();
 
 	this.show = SHOW_BOTH;
 
 	this.reparse();
 	this.camera = {
-		x: 0.5 * this.width,
-		y: 0.5 * this.height,
+		x: 0.0,
+		y: 0.0,
 		portion: 1.0 //view 'portion' portion of item along shortest axis
 	};
 
@@ -109,16 +104,26 @@ function ShowKnitout(canvas) {
 			return false;
 		}
 	});
-
-
 }
+
+
+ShowKnitout.prototype.clearDrawing = function ShowKnitout_clearDrawing() {
+	this.columns = 0;
+	this.rows = 0;
+	this.grids = { b:[], f:[] };
+	this.columnX = [];
+	this.min = { x:0, y:0 };
+	this.max = { x:0, y:0 };
+
+	this.drawing = TileSet.makeDrawing();
+};
 
 ShowKnitout.prototype.setCurrentTransform = function ShowKnitout_setCurrentTransform() {
 	let rect = this.canvas.getBoundingClientRect();
 	const w = Math.round(rect.width * window.devicePixelRatio);
 	const h = Math.round(rect.height * window.devicePixelRatio);
 
-	const scale = Math.min(w / (this.camera.portion * this.width), h / (this.camera.portion * this.height));
+	const scale = Math.min(w / (this.camera.portion * (this.max.x-this.min.x)), h / (this.camera.portion * (this.max.y-this.min.y)));
 
 	this.currentTransform = [scale,0, 0,-scale, 0.5*w-scale*this.camera.x, 0.5*h+scale*this.camera.y];
 };
@@ -143,54 +148,14 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	this.setCurrentTransform();
 	ctx.setTransform(...this.currentTransform);
 
-
-	//draw lines from back bed:
-	for (let row = 0; row < this.rows; ++row) {
-		let y = row * 9.0;
-		for (let col = 0; col < this.columns; ++col) {
-			let x = this.columnX[col];
-			let g = this.grids.b[row * this.columns + col];
-			if (g) {
-				TileSet.draw(ctx, x, y, g);
-			}
-		}
-	}
-
-	//fade back slightly:
-	ctx.setTransform(1,0, 0,1, 0,0);
-	ctx.globalAlpha = 0.2;
-	ctx.fillStyle = "#888";
-	ctx.fillRect(0,0, w,h);
-	ctx.globalAlpha = 1.0;
-	ctx.setTransform(...this.currentTransform);
-
-	//draw middle (crossing) lines:
-	this.crosses.forEach(function(cross){
-		TileSet.draw(ctx, 0, 0, cross); //slightly a hack
+	TileSet.draw(ctx, this.drawing, {
+		frontOfs:{x:0.0, y:0.0},
+		backOfs:{x:-0.3 * TileSet.LoopWidth, y:0.3 * TileSet.TileHeight},
+		backTintRGBA:[0.53, 0.53, 0.53, 0.6],
+		middleTintRGBA:[0.53, 0.53, 0.53, 0.3],
+		frontTintRGBA:[1.0, 1.0, 1.0, 0.0]
 	});
-
-	//fade middle slightly:
-	ctx.setTransform(1,0, 0,1, 0,0);
-	ctx.globalAlpha = 0.2;
-	ctx.fillStyle = "#888";
-	ctx.fillRect(0,0, w,h);
-	ctx.globalAlpha = 1.0;
-	ctx.setTransform(...this.currentTransform);
-
-	//draw lines from front bed:
-	if (this.show.front !== 0.0) {
-		for (let row = 0; row < this.rows; ++row) {
-			let y = row * 9.0;
-			for (let col = 0; col < this.columns; ++col) {
-				let x = this.columnX[col];
-				let g = this.grids.f[row * this.columns + col];
-				if (g) {
-					TileSet.draw(ctx, x, y, g);
-				}
-			}
-		}
-	}
-
+	
 	if (this.hovered) {
 		let x = this.columnX[this.hovered.col];
 		let w = (this.hovered.col+1 < this.columnX.length ? this.columnX[this.hovered.col+1] : this.width) - x;
@@ -204,8 +169,8 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	let mx = (this.mouse.x - this.currentTransform[4]) / this.currentTransform[0];
 	let my = (this.mouse.y - this.currentTransform[5]) / this.currentTransform[3];
 	this.hovered = null;
-	let row = Math.floor(my / TileSet.TileHeight);
-	if (row >= 0 && row < this.rows && 0 <= mx && mx <= this.width && this.columns) {
+	let row = Math.floor((my - this.min.y) / TileSet.TileHeight);
+	if (row >= 0 && row < this.rows && this.min.x <= mx && mx <= this.max.x) {
 		let col = this.columnX.length - 1;
 		while (col > 0 && this.columnX[col] > mx) --col;
 		if (this.show.front > 0.0) {
@@ -273,24 +238,18 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 	this.requestDraw();
 
 	//clear grids:
-	this.columns = 0;
-	this.rows = 0;
-	this.grids = { b:[], f:[] };
-	this.crosses = []; //crossing yarn fragments
-	this.columnX = [];
-	this.width = 0.0;
-	this.height = 0.0;
+	this.clearDrawing();
 
 	this.rows = 3 * 5;
 	this.columns = 3 * 4;
 
-	this.grids.b = new Array(this.rows * this.columns);
-	this.grids.f = new Array(this.rows * this.columns);
+	this.grids.b = new Array(rows * columns);
+	this.grids.f = new Array(rows * columns);
 	for (let col = 0; col < this.columns; ++col) {
 		this.columnX.push(col * TileSet.LoopWidth);
 	}
-	this.width = this.columns * TileSet.LoopWidth;
-	this.height = this.rows * TileSet.TileHeight;
+	this.min = TileSet.tileLowerLeft(0,0);
+	this.max = TileSet.tileLowerLeft(columns, rows);
 
 	for (let row = 0; row < this.rows; ++row) {
 		let r = this.rows - 1 - row;
@@ -313,7 +272,9 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 				across = loops;
 			}
 			//if (type === 'x' && yarns.length !== 0) continue;
-			this.grids.f[row * this.columns + col] = TileSet.makeLoopTile(type, bed, loops, yarns, across, {});
+			this.grids.f[row * this.columns + col] = {};
+			TileSet.addLoopTile(this.drawing, {},
+				{i:col, y:row, type:type, bed:bed, loops:loops, yarms:yarns, across:across});
 		}
 	}
 };
@@ -331,13 +292,7 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 	this.requestDraw();
 
 	//clear grids:
-	this.columns = 0;
-	this.rows = 0;
-	this.grids = { b:[], f:[] };
-	this.crosses = [];
-	this.columnX = [];
-	this.width = 0.0;
-	this.height = 0.0;
+	this.clearDrawing();
 
 	let minIndex = Infinity;
 	let maxIndex = -Infinity;
@@ -347,21 +302,16 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 	}
 	if (minIndex > maxIndex) return;
 
+	this.min = TileSet.tileLowerLeft(minIndex, 0);
+	this.max = TileSet.tileLowerLeft(maxIndex + 1, machine.topRow + 1);
+
 	//fill grids from machine's columns:
 	this.columns = maxIndex - minIndex + 1;
 	this.rows = machine.topRow + 1;
 	this.grids.b = new Array(this.columns * this.rows);
 	this.grids.f = new Array(this.columns * this.rows);
 
-	let x = 0.0;
-
 	for (let i = minIndex; i <= maxIndex; ++i) {
-		this.columnX.push(x);
-		if (i % 2 === 0) {
-			x += TileSet.LoopWidth;
-		} else {
-			x += TileSet.YarnWidth;
-		}
 		let bColumn = machine.beds.b.getColumn(i);
 		let fColumn = machine.beds.f.getColumn(i);
 		let bi = 0;
@@ -384,45 +334,41 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 					const loops = f.ports['v'];
 					const yarns = f.ports['+'];
 					const incoming = f.ports['x'];
-					this.grids.f[y * this.columns + (i - minIndex)] =
-						TileSet.makeLoopTile(f.type, 'f', loops, yarns, incoming, f.colors);
-					if (this.grids.f[y * this.columns + (i - minIndex)]) {
-						this.grids.f[y * this.columns + (i - minIndex)].src = f;
-					} else {
-						console.warn("No tile for", f);
-					}
+					this.grids.f[y * this.columns + (i - minIndex)] = f;
+					TileSet.addLoopTile(this.drawing, f.styles,
+						{i:i, y:y, type:f.type, bed:'f', loops:loops, yarns:yarns, across:incoming});
 				}
 				if (b) {
 					const loops = b.ports['v'];
 					const yarns = b.ports['+'];
 					const incoming = b.ports['o'];
-					this.grids.b[y * this.columns + (i - minIndex)] =
-						TileSet.makeLoopTile(b.type, 'b', loops, yarns, incoming, b.colors);
-					if (this.grids.b[y * this.columns + (i - minIndex)]) {
-						this.grids.b[y * this.columns + (i - minIndex)].src = b;
-					} else {
-						console.warn("No tile for", b);
-					}
+					this.grids.b[y * this.columns + (i - minIndex)] = b;
+					TileSet.addLoopTile(this.drawing, b.styles,
+						{i:i, y:y, type:b.type, bed:'b', loops:loops, yarns:yarns, across:incoming});
 				}
 			} else {
 				//yarns:
 				if (f) {
-					this.grids.f[y * this.columns + (i - minIndex)] =
-						TileSet.makeYarnTile(f.type, 'f', f.ports, f.colors);
+					this.grids.f[y * this.columns + (i - minIndex)] = f;
+					TileSet.addYarnTile(this.drawing, f.styles, {i:i, y:y, bed:'f', ports:f.ports});
 				}
 				if (b) {
-					this.grids.b[y * this.columns + (i - minIndex)] =
-						TileSet.makeYarnTile(b.type, 'b', b.ports, b.colors);
+					this.grids.b[y * this.columns + (i - minIndex)] = b;
+					TileSet.addYarnTile(this.drawing, b.styles, {i:i, y:y, bed:'b', ports:b.ports});
 				}
 			}
 		}
 	}
-	this.width = x;
-	this.height = this.rows * TileSet.TileHeight;
+
+	//fill in columnX for ... hm... I guess highlighting code uses it?
+	for (let i = minIndex; i <= maxIndex+1; ++i) {
+		this.columnX.push(TileSet.tileLowerLeft(i,0).x);
+	}
 
 	//fill crosses from machine's crosses:
 	machine.crosses.forEach(function(cross){
-		this.crosses.push(TileSet.makeCross(cross.type, this.columnX[cross.i-minIndex], this.columnX[cross.i2-minIndex], TileSet.TileHeight * cross.y, cross.yarns, cross.colors));
+		TileSet.addCross(this.drawing, cross);
+		//this.crosses.push(TileSet.makeCross(cross.type, this.columnX[cross.i-minIndex], this.columnX[cross.i2-minIndex], TileSet.TileHeight * cross.y, cross.yarns, cross.colors));
 	}, this);
 
 };
@@ -432,6 +378,6 @@ let elts = document.getElementsByClassName("ShowKnitout");
 for (let i = 0; i < elts.length; ++i) {
 	let elt = elts[i];
 	console.assert(elt.tagName === "CANVAS", "ShowKnitouts should be canvases.");
-	new ShowKnitout(elt);
+	window.SK = new ShowKnitout(elt);
 }
 
