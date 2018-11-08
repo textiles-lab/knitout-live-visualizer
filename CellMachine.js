@@ -932,6 +932,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 
 	cs.forEach(function(cn){
 		xferFrom.addOut((d === '+' ? '-' : '+'), cn);
+		xferFrom.addOut('^', cn);
 		xferFrom.addOut(d, cn);
 	}, this);
 
