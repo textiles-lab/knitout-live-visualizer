@@ -150,7 +150,7 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 
 	TileSet.draw(ctx, this.drawing, {
 		frontOfs:{x:0.0, y:0.0},
-		backOfs:{x:-0.3 * TileSet.LoopWidth, y:0.3 * TileSet.TileHeight},
+		backOfs:{x:-0.15 * TileSet.LoopWidth, y:0.2 * TileSet.TileHeight},
 		backTintRGBA:[0.53, 0.53, 0.53, 0.6],
 		middleTintRGBA:[0.53, 0.53, 0.53, 0.3],
 		frontTintRGBA:[1.0, 1.0, 1.0, 0.0]
