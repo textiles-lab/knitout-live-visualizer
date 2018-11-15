@@ -619,13 +619,21 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 };
 
 CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) {
-	console.assert(cn in this.carriers, "Carrier exists.");
+	
+	let idx = -1;
+	this.carriers.forEach(function(c,ci){
+		if(c.name === cn){
+			idx = ci;
+		}
+	}, this);
 
+	console.assert(idx >= 0, "Carrier exists");
+   		
+	
 	//set up yarn for a given stitch.
 	//post-condition: needle just before n in direction d has yarn from cn exiting via its top face.
 	// i.e. carrier is ready to make stitch at n in direction d, after (possibly) turning.
-	let c = this.carriers[cn];
-
+	let c = this.carriers[idx];
 	let targetBed = needleBed(n);
 
 	if (!c.at) {
