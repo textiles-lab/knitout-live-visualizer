@@ -573,12 +573,18 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 		icell.cell.y = y;
 		icell.cell.styles = this.styles;
 		let column = bed.getColumn(icell.i);
+
+		function dump() {
+			console.log("Adding " + JSON.stringify(icell.cell.ports['v']) + " over " + (column.length ? JSON.stringify(column[column.length-1].ports['^']) : "empty column"));
+			return false;
+		}
+
 		//Add empty cells to hold trailing loops/yarns:
 		if (icell.i % 2 === 0) {
 			let cs = icell.cell.ports['v'];
+			//had better be exactly the same stack from below:
 			if (cs.length) {
-				//had better be exactly the same stack from below:
-				console.assert(column.length && JSON.stringify(column[column.length-1].ports['^']) === JSON.stringify(cs), "loops out should always be exactly loops in.");
+				console.assert((column.length && JSON.stringify(column[column.length-1].ports['^']) === JSON.stringify(cs)) || dump(), "loops out should always be exactly loops in.");
 				while (column[column.length-1].y + 1 < y) {
 					let empty = new LoopCell('m');
 					empty.y = column[column.length-1].y + 1;
@@ -589,13 +595,15 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 					empty.styles = column[column.length-1].styles;
 					column.push(empty);
 				}
+			} else {
+				console.assert(column.length === 0 || column[column.length-1].ports['^'].length === 0 || dump(), "loops out should match loops in.");
 			}
 		} else {
 			//TODO: misses for *yarn*
 			let cs = icell.cell.ports['v'];
 			if (cs.length) {
+				console.assert((column.length && JSON.stringify(column[column.length-1].ports['^']) === JSON.stringify(cs)) || dump(), "yarn out should always be exactly yarn in.");
 				//had better be exactly the same stack from below:
-				console.assert(column.length && JSON.stringify(column[column.length-1].ports['^']) === JSON.stringify(cs), "yarn out should always be exactly yarn in.");
 				while (column[column.length-1].y + 1 < y) {
 					let empty = new YarnCell();
 					empty.y = column[column.length-1].y + 1;
@@ -606,6 +614,8 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 					empty.styles = column[column.length-1].styles;
 					column.push(empty);
 				}
+			} else {
+				console.assert(column.length === 0 || column[column.length-1].ports['^'].length === 0 || dump(), "yarns out should always be exactly yarns in.");
 			}
 
 		}
@@ -629,7 +639,7 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 	}
 };
 
-CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) {
+CellMachine.prototype.bringCarrier = function CellMachine_bringCarrier(d, n, cn) {
 	
 	//set up yarn for a given stitch.
 	//post-condition: needle just before n in direction d has yarn from cn exiting via its top face.
@@ -640,6 +650,15 @@ CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) 
 	if (!c.at) {
 		//add yarn-in cell at top of yarnBeforeIndex(d,n)
 		let cell = new YarnCell();
+		//add existing in/out:
+		let column = this.beds[targetBed].getColumn(yarnBeforeIndex(d,n));
+		if (column.length) {
+			column[column.length-1].ports['^'].forEach(function (cn) {
+				cell.addOut('v', cn);
+				cell.addOut('^', cn);
+			});
+		}
+		//add yarn start:
 		cell.addOut('^', cn);
 		this.addCells(targetBed, [{i:yarnBeforeIndex(d,n), cell:cell}]); //might increase this.topRow depending on if cell can be merged, otherwise will add *at* topRow.
 		c.at = {d:d, n:n};
@@ -738,12 +757,18 @@ CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) 
 		}
 	}
 
+	//this seems ~very~ suspicious:
 	cells.forEach(function(icell){
 		let bed = (icell.bed ? icell.bed : targetBed);
 		let c = this.beds[bed].getColumn(icell.i);
 		if (c.length) {
+			let have = icell.cell.ports['v'].slice();
 			c[c.length-1].ports['^'].forEach(function (cn) {
-				if (icell.cell.ports['v'].indexOf(cn) !== -1) return; //accounted for already.
+				let idx = have.indexOf(cn);
+				if (idx !== -1) { //accounted for already.
+					have.splice(idx,1);
+					return;
+				}
 				//TODO: if bed === 'b', add at begin of ports
 				icell.cell.addOut('v', cn);
 				icell.cell.addOut('^', cn);
@@ -813,7 +838,13 @@ CellMachine.prototype.out = function CellMachine_out(cs) {
 		let c = this.getCarrier(cn);
 		console.assert(c, "Trying to take out a carrier '" + cn + "' that doesn't exist.");
 		if (c.at) {
-			//TODO: add some sort of yarn out cell?
+			let column = this.beds['f'].getColumn(yarnBeforeIndex(c.at.d,c.at.n));
+			console.assert(column.length, "can't take a carrier out of an empty yarn column");
+			let cell = column[column.length-1];
+			let idx = cell.ports['^'].indexOf(cn);
+			console.assert(idx !== -1, "must have yarn in column where it's being removed");
+			cell.ports['^'].splice(idx, 1);
+
 			delete c.at;
 		}
 	}, this);
@@ -840,10 +871,20 @@ CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuc
 	//Turn carriers toward the needle:
 	if (cs.length) {
 		let turn = new YarnCell();
-		cs.forEach(function(cn){
+
+		let column = this.beds[needleBed(n)].getColumn(yarnBeforeIndex(d,n));
+		console.assert(column.length, "carriers must be here already");
+		let turned = 0;
+		column[column.length-1].ports['^'].forEach(function (cn) {
 			turn.addOut('v', cn);
-			turn.addOut(d, cn);
-		}, this);
+			if (cs.indexOf(cn) === -1) {
+				turn.addOut('^', cn);
+			} else {
+				++turned;
+				turn.addOut(d, cn);
+			}
+		});
+		console.assert(turned === cs.length, "turned all the yarns");
 		cells.push({i:yarnBeforeIndex(d, n), cell:turn});
 	}
 
@@ -852,14 +893,27 @@ CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuc
 
 	//turn carriers back up:
 	if (cs.length) {
-		let turn = new YarnCell();
 		let nextD = d;
 		let nextN = (d === '+' ? nextNeedle(n) : previousNeedle(n));
 		cs.forEach(function(cn){
-			turn.addOut((d === '+' ? '-' : '+'), cn);
-			turn.addOut('^', cn);
 			this.getCarrier(cn).at = {d:nextD, n:nextN};
 		}, this);
+
+		let turn = new YarnCell();
+		cs.forEach(function(cn){
+			turn.addOut((d === '+' ? '-' : '+'), cn);
+			turn.addOut('^', cn);
+		}, this);
+
+		let column = this.beds[needleBed(n)].getColumn(yarnAfterIndex(d,n));
+		if (column.length) {
+			column[column.length-1].ports['^'].forEach(function (cn) {
+				console.assert(cs.indexOf(cn) === -1, "shouldn't run into same yarn");
+				turn.addOut('v', cn);
+				turn.addOut('^', cn);
+			});
+		}
+
 		cells.push({i:yarnAfterIndex(d, n), cell:turn});
 	}
 

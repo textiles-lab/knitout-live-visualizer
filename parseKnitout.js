@@ -12,6 +12,7 @@ function parseKnitout(codeText, machine) {
 	
 	codeText.split("\n").forEach(function(line, lineNumber) {
 		if (end) return;
+		console.log(lineNumber + ": " + line); //DEBUG
 		function addError(info) {
 			console.log("Parse Error on line " + lineNumber + ": " + info);
 			errors.push({lineNumber:lineNumber, text:info});
