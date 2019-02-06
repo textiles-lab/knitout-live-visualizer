@@ -227,6 +227,17 @@ function CellMachine() {
 
 //Helpers:
 
+CellMachine.prototype.getCarrier = function CellMachine_getCarrier(cn) {
+	let idx = -1;
+	this.carriers.forEach(function(c,ci){
+		if(c.name === cn){
+			idx = ci;
+		}
+	}, this);
+	console.assert(idx >= 0, "Carrier exists");
+	return this.carriers[idx];
+};
+
 CellMachine.prototype.dump = function CellMachine_dump() {
 	//dump to ascii grid.
 	let minIndex = Infinity;
@@ -620,20 +631,10 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 
 CellMachine.prototype.bringCarrier = function CellMachine_moveCarrier(d, n, cn) {
 	
-	let idx = -1;
-	this.carriers.forEach(function(c,ci){
-		if(c.name === cn){
-			idx = ci;
-		}
-	}, this);
-
-	console.assert(idx >= 0, "Carrier exists");
-   		
-	
 	//set up yarn for a given stitch.
 	//post-condition: needle just before n in direction d has yarn from cn exiting via its top face.
 	// i.e. carrier is ready to make stitch at n in direction d, after (possibly) turning.
-	let c = this.carriers[idx];
+	let c = this.getCarrier(cn);
 	let targetBed = needleBed(n);
 
 	if (!c.at) {
@@ -809,8 +810,8 @@ CellMachine.prototype.setCarriers = function CellMachine_setCarriers(carriers) {
 CellMachine.prototype.in = function CellMachine_in(cs) { /* nothing */ };
 CellMachine.prototype.out = function CellMachine_out(cs) {
 	cs.forEach(function(cn){
-		console.assert(cn in this.carriers, "Trying to take out a carrier '" + cn + "' that doesn't exist.");
-		let c = this.carriers[cn];
+		let c = this.getCarrier(cn);
+		console.assert(c, "Trying to take out a carrier '" + cn + "' that doesn't exist.");
 		if (c.at) {
 			//TODO: add some sort of yarn out cell?
 			delete c.at;
@@ -857,7 +858,7 @@ CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuc
 		cs.forEach(function(cn){
 			turn.addOut((d === '+' ? '-' : '+'), cn);
 			turn.addOut('^', cn);
-			this.carriers[cn].at = {d:nextD, n:nextN};
+			this.getCarrier(cn).at = {d:nextD, n:nextN};
 		}, this);
 		cells.push({i:yarnAfterIndex(d, n), cell:turn});
 	}
@@ -995,7 +996,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 		cs.forEach(function(cn){
 			turn.addOut((d === '+' ? '-' : '+'), cn);
 			turn.addOut('^', cn);
-			this.carriers[cn].at = {d:nextD, n:nextN};
+			this.getCarrier(cn).at = {d:nextD, n:nextN};
 		}, this);
 		cells.push({i:yarnAfterIndex(d, n), cell:turn});
 	}
