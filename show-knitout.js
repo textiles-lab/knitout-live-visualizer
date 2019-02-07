@@ -243,13 +243,13 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 	this.rows = 3 * 5;
 	this.columns = 3 * 4;
 
-	this.grids.b = new Array(rows * columns);
-	this.grids.f = new Array(rows * columns);
+	this.grids.b = new Array(this.rows * this.columns);
+	this.grids.f = new Array(this.rows * this.columns);
 	for (let col = 0; col < this.columns; ++col) {
 		this.columnX.push(col * TileSet.LoopWidth);
 	}
 	this.min = TileSet.tileLowerLeft(0,0);
-	this.max = TileSet.tileLowerLeft(columns, rows);
+	this.max = TileSet.tileLowerLeft(this.columns, this.rows);
 
 	for (let row = 0; row < this.rows; ++row) {
 		let r = this.rows - 1 - row;
