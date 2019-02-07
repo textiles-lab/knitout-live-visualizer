@@ -386,3 +386,835 @@ drop f1
 drop f2
 drop f3
 outhook A B C
+
+; split +  over 
+inhook A B C
+tuck - b3 
+tuck - b2 
+tuck - b1 
+tuck - b0 
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 
+split + f1 b1 
+split + f2 b2 
+split + f3 b3 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split -  over 
+inhook A B C
+tuck + b0 
+tuck + b1 
+tuck + b2 
+tuck + b3 
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 
+split - f2 b2 
+split - f1 b1 
+split - f0 b0 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A over 
+inhook A B C
+tuck - b3 
+tuck - b2 
+tuck - b1 
+tuck - b0 
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A
+split + f1 b1 A
+split + f2 b2 A
+split + f3 b3 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A over 
+inhook A B C
+tuck + b0 
+tuck + b1 
+tuck + b2 
+tuck + b3 
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A
+split - f2 b2 A
+split - f1 b1 A
+split - f0 b0 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B over 
+inhook A B C
+tuck - b3 
+tuck - b2 
+tuck - b1 
+tuck - b0 
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B
+split + f1 b1 A B
+split + f2 b2 A B
+split + f3 b3 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B over 
+inhook A B C
+tuck + b0 
+tuck + b1 
+tuck + b2 
+tuck + b3 
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B
+split - f2 b2 A B
+split - f1 b1 A B
+split - f0 b0 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B C over 
+inhook A B C
+tuck - b3 
+tuck - b2 
+tuck - b1 
+tuck - b0 
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B C
+split + f1 b1 A B C
+split + f2 b2 A B C
+split + f3 b3 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B C over 
+inhook A B C
+tuck + b0 
+tuck + b1 
+tuck + b2 
+tuck + b3 
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B C
+split - f2 b2 A B C
+split - f1 b1 A B C
+split - f0 b0 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split +  over A
+inhook A B C
+tuck - b3 A
+tuck - b2 A
+tuck - b1 A
+tuck - b0 A
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 
+split + f1 b1 
+split + f2 b2 
+split + f3 b3 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split -  over A
+inhook A B C
+tuck + b0 A
+tuck + b1 A
+tuck + b2 A
+tuck + b3 A
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 
+split - f2 b2 
+split - f1 b1 
+split - f0 b0 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A over A
+inhook A B C
+tuck - b3 A
+tuck - b2 A
+tuck - b1 A
+tuck - b0 A
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A
+split + f1 b1 A
+split + f2 b2 A
+split + f3 b3 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A over A
+inhook A B C
+tuck + b0 A
+tuck + b1 A
+tuck + b2 A
+tuck + b3 A
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A
+split - f2 b2 A
+split - f1 b1 A
+split - f0 b0 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B over A
+inhook A B C
+tuck - b3 A
+tuck - b2 A
+tuck - b1 A
+tuck - b0 A
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B
+split + f1 b1 A B
+split + f2 b2 A B
+split + f3 b3 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B over A
+inhook A B C
+tuck + b0 A
+tuck + b1 A
+tuck + b2 A
+tuck + b3 A
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B
+split - f2 b2 A B
+split - f1 b1 A B
+split - f0 b0 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B C over A
+inhook A B C
+tuck - b3 A
+tuck - b2 A
+tuck - b1 A
+tuck - b0 A
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B C
+split + f1 b1 A B C
+split + f2 b2 A B C
+split + f3 b3 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B C over A
+inhook A B C
+tuck + b0 A
+tuck + b1 A
+tuck + b2 A
+tuck + b3 A
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B C
+split - f2 b2 A B C
+split - f1 b1 A B C
+split - f0 b0 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split +  over A B
+inhook A B C
+tuck - b3 A B
+tuck - b2 A B
+tuck - b1 A B
+tuck - b0 A B
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 
+split + f1 b1 
+split + f2 b2 
+split + f3 b3 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split -  over A B
+inhook A B C
+tuck + b0 A B
+tuck + b1 A B
+tuck + b2 A B
+tuck + b3 A B
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 
+split - f2 b2 
+split - f1 b1 
+split - f0 b0 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A over A B
+inhook A B C
+tuck - b3 A B
+tuck - b2 A B
+tuck - b1 A B
+tuck - b0 A B
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A
+split + f1 b1 A
+split + f2 b2 A
+split + f3 b3 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A over A B
+inhook A B C
+tuck + b0 A B
+tuck + b1 A B
+tuck + b2 A B
+tuck + b3 A B
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A
+split - f2 b2 A
+split - f1 b1 A
+split - f0 b0 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B over A B
+inhook A B C
+tuck - b3 A B
+tuck - b2 A B
+tuck - b1 A B
+tuck - b0 A B
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B
+split + f1 b1 A B
+split + f2 b2 A B
+split + f3 b3 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B over A B
+inhook A B C
+tuck + b0 A B
+tuck + b1 A B
+tuck + b2 A B
+tuck + b3 A B
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B
+split - f2 b2 A B
+split - f1 b1 A B
+split - f0 b0 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B C over A B
+inhook A B C
+tuck - b3 A B
+tuck - b2 A B
+tuck - b1 A B
+tuck - b0 A B
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B C
+split + f1 b1 A B C
+split + f2 b2 A B C
+split + f3 b3 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B C over A B
+inhook A B C
+tuck + b0 A B
+tuck + b1 A B
+tuck + b2 A B
+tuck + b3 A B
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B C
+split - f2 b2 A B C
+split - f1 b1 A B C
+split - f0 b0 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split +  over A B C
+inhook A B C
+tuck - b3 A B C
+tuck - b2 A B C
+tuck - b1 A B C
+tuck - b0 A B C
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 
+split + f1 b1 
+split + f2 b2 
+split + f3 b3 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split -  over A B C
+inhook A B C
+tuck + b0 A B C
+tuck + b1 A B C
+tuck + b2 A B C
+tuck + b3 A B C
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 
+split - f2 b2 
+split - f1 b1 
+split - f0 b0 
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A over A B C
+inhook A B C
+tuck - b3 A B C
+tuck - b2 A B C
+tuck - b1 A B C
+tuck - b0 A B C
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A
+split + f1 b1 A
+split + f2 b2 A
+split + f3 b3 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A over A B C
+inhook A B C
+tuck + b0 A B C
+tuck + b1 A B C
+tuck + b2 A B C
+tuck + b3 A B C
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A
+split - f2 b2 A
+split - f1 b1 A
+split - f0 b0 A
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B over A B C
+inhook A B C
+tuck - b3 A B C
+tuck - b2 A B C
+tuck - b1 A B C
+tuck - b0 A B C
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B
+split + f1 b1 A B
+split + f2 b2 A B
+split + f3 b3 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B over A B C
+inhook A B C
+tuck + b0 A B C
+tuck + b1 A B C
+tuck + b2 A B C
+tuck + b3 A B C
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B
+split - f2 b2 A B
+split - f1 b1 A B
+split - f0 b0 A B
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split + A B C over A B C
+inhook A B C
+tuck - b3 A B C
+tuck - b2 A B C
+tuck - b1 A B C
+tuck - b0 A B C
+outhook A B C
+inhook A B C
+tuck - f3 
+tuck - f2 A
+tuck - f1 A B
+tuck - f0 A B C
+split + f0 b0 A B C
+split + f1 b1 A B C
+split + f2 b2 A B C
+split + f3 b3 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C
+
+; split - A B C over A B C
+inhook A B C
+tuck + b0 A B C
+tuck + b1 A B C
+tuck + b2 A B C
+tuck + b3 A B C
+outhook A B C
+inhook A B C
+tuck + f0 
+tuck + f1 A
+tuck + f2 A B
+tuck + f3 A B C
+split - f3 b3 A B C
+split - f2 b2 A B C
+split - f1 b1 A B C
+split - f0 b0 A B C
+drop f0
+drop f1
+drop f2
+drop f3
+drop b0
+drop b1
+drop b2
+drop b3
+outhook A B C

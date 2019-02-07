@@ -40,3 +40,55 @@ console.log(
 });
 });
 });
+
+
+
+["split"].forEach(function(op){
+["", "A", "A B", "A B C"].forEach(function(bg){
+["", "A", "A B", "A B C"].forEach(function(yarns){
+["+","-"].forEach(function(dir){
+	let n;
+	let n2;
+	let y;
+	if (dir === '-') {
+		n = ["f0", "f1", "f2", "f3"];
+		n2 = ["b0", "b1", "b2", "b3"];
+		y = ["", "A", "A B", "A B C"];
+	} else {
+		n = ["f3", "f2", "f1", "f0"];
+		n2 = ["b3", "b2", "b1", "b0"];
+		y = ["", "A", "A B", "A B C"];
+	}
+	let d2 = (dir == '+' ? '-' : '+');
+	console.log(
+		"\n"+
+		"; " + op + " " + dir + " " + yarns + " over " + bg + "\n"+
+		"inhook A B C\n"+
+		"tuck " + d2 + " " + n2[0] + " " + bg + "\n"+
+		"tuck " + d2 + " " + n2[1] + " " + bg + "\n"+
+		"tuck " + d2 + " " + n2[2] + " " + bg + "\n"+
+		"tuck " + d2 + " " + n2[3] + " " + bg + "\n"+
+		"outhook A B C\n"+
+		"inhook A B C\n"+
+		"tuck " + d2 + " " + n[0] + " " + y[0] + "\n"+
+		"tuck " + d2 + " " + n[1] + " " + y[1] + "\n"+
+		"tuck " + d2 + " " + n[2] + " " + y[2] + "\n"+
+		"tuck " + d2 + " " + n[3] + " " + y[3] + "\n"+
+		op + " " + dir + " " + n[3] + " " + n2[3] + " " + yarns + "\n"+
+		op + " " + dir + " " + n[2] + " " + n2[2] + " " + yarns + "\n"+
+		op + " " + dir + " " + n[1] + " " + n2[1] + " " + yarns + "\n"+
+		op + " " + dir + " " + n[0] + " " + n2[0] + " " + yarns + "\n"+
+		"drop f0\n"+
+		"drop f1\n"+
+		"drop f2\n"+
+		"drop f3\n"+
+		"drop b0\n"+
+		"drop b1\n"+
+		"drop b2\n"+
+		"drop b3\n"+
+		"outhook A B C"
+	);
+});
+});
+});
+});
