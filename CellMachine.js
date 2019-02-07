@@ -1059,7 +1059,9 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 };
 
 CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
-	//TODO: resolve whether this should do nothing or whether it should generate lots of yarn movement faces.
+	cs.forEach(function(cn){
+		this.bringCarrier(d,n,cn);
+	}, this);
 };
 
 CellMachine.prototype.pause = function CellMachine_pause() { /* nothing */ };
