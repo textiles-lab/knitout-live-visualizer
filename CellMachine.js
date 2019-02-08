@@ -80,7 +80,17 @@ function yarnAfterIndex(d, n) {
 
 function YarnCell() {
 	this.y = 0;
-	this.ports = { '-':[], '+':[], 'v':[], '^':[], 'x':[], 'o':[] };
+	//port layout in cell:
+	//     ^-   ^+
+	//  +----|-----|----+
+	//  |               |
+	//- - x-    x    x+ - +
+	//  |          |    |
+	//  +----|-----|----+
+	//     v-   v+
+	//
+	//<-- I WAS HERE
+	this.ports = { '-':[], '+':[], 'v-':[], 'v+':[], '^-':[], '^+':[] 'x':[], 'o':[] };
 }
 
 YarnCell.prototype.addOut = function YarnCell_addOut(dir, yarn) {
@@ -222,6 +232,9 @@ function CellMachine() {
 	this.crosses = []; //<-- yarn crossings between beds
 	this.topRow = 0;
 	this.styles = {}; //<-- space-separated carrier sets => {color: , ...} objects; set with x-vis-color command
+
+	this.racking = 0.0; //<-- racking, N or N + 0.25
+
 	this.defaultStyles = {};
 };
 
@@ -639,7 +652,68 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 	}
 };
 
+CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, cs) {
+	//New: gather up carriers and move 'em on over, ending with upward yarn on the proper needle and everything.
+	if (cs.length === 0) return;
+
+	let targetBed = needleBed(n);
+	let targetIndex = yarnBeforeIndex(d, n);
+
+	//figure out range of where carriers actually are (front-referenced indices):
+	let minIndex = Infinity;
+	let maxIndex = -Infinity;
+	cs.forEach(function(cn){
+		let c = this.getCarrier(cn);
+		if (c.at) {
+			let index = yarnBeforeIndex(c.at.d, c.at.n);
+			minIndex = Math.min(minIndex, index);
+			maxIndex = Math.max(maxIndex, index);
+		}
+	}, this);
+
+	//left-to-right sweep:
+	let moving = [];
+	for (let i = minIndex; i < targetIndex; ++i) {
+		let back = this.beds['b'].getColumn(i);
+		let front = this.beds['f'].getColumn(i);
+
+		let backUp = (back.length ? back[back.length-1].ports['^'] : []);
+		let frontUp = (front.length ? front[front.length-1].ports['^'] : []);
+
+		if (i % 2 === 0) {
+			//loop tile
+		} else {
+			//yarn tile
+
+			if (this.racking === 0) {
+			}
+
+			let backCell = new YarnCell();
+			let frontCell = new YarnCell();
+
+			moving.forEach(function(
+
+			let backTurn = [];
+			let frontTurn = [];
+			cs.forEach(function(cn){
+				if (backUp.indexOf(cn) !== -1) {
+				}
+				if (frontUp.indexOf(cn) !== -1) {
+				}
+			}, this);
+		}
+	}
+
+	//columns to move through:
+	let iBack = 0;
+	let iFront = 0;
+
+
+};
+
 CellMachine.prototype.bringCarrier = function CellMachine_bringCarrier(d, n, cn) {
+	//--- OLD OLD OLD OLD OLD OLD OLD OLD ---
+	console.assert(false, "OLD bringCarrier CODE");
 	
 	//set up yarn for a given stitch.
 	//post-condition: needle just before n in direction d has yarn from cn exiting via its top face.
@@ -858,13 +932,20 @@ CellMachine.prototype.outhook = function CellMachine_outhook(cs) {
 CellMachine.prototype.stitch = function CellMachine_stitch(l, t) {
 	//TODO: set leading / stitch values.
 };
-CellMachine.prototype.rack = function CellMachine_rack(r) { /* nothing */ };
+CellMachine.prototype.rack = function CellMachine_rack(r) {
+	if (typeof(r) !== "number") throw "Racking must be a number.";
+	if (Math.floor(r) === r || Math.floor(r) + 0.25 === r) throw "Racking must be an integer or an integer plus 0.25";
+	this.racking = r;
+};
 
 CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuck) {
 	//Bring carriers on over:
+	this.bringCarriers(d, n, cs);
+	/*
 	cs.forEach(function(cn){
 		this.bringCarrier(d,n,cn);
 	}, this);
+	*/
 
 	let cells = [];
 

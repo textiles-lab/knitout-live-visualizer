@@ -4,7 +4,7 @@ const VectorTiles = {};
 
 VectorTiles.LoopWidth = 13;
 VectorTiles.YarnWidth = 4;
-VectorTiles.TileHeight = 9.0;
+VectorTiles.TileHeight = 9;
 
 function Drawing() {
 	this.back = {}; //{ style:{style: , lines:[ [x0, y0, x1, y1, ... ], ... ]}, ... }
