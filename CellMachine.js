@@ -1059,155 +1059,146 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 
 };
 
-CellMachine.prototype.makeTurn = function CellMachine_makeTurn(d, n, cs, cells) {
+CellMachine.prototype.makeTurnBefore = function CellMachine_makeTurnBefore(d, n, cs, cells) {
 	//to be used after bringCarriers -- makes a turn containing all the carriers in cs,
 	//stores it into cells.
 
+	//Turn carriers toward the needle:
+	if (cs.length) {
+		let turn = new YarnCell();
+
+		let column = this.beds[needleBed(n)].getColumn(yarnBeforeIndex(d,n));
+		console.assert(column.length, "carriers must be here already");
+		let turned = 0;
+		['-','+'].forEach(function(side){
+			column[column.length-1].ports['^'+side].forEach(function (cn) {
+				if (cs.indexOf(cn) === -1) {
+					turn.addSeg(cn, 'v'+side, '^'+side);
+				} else {
+					console.assert(side === d, "should already be on the right side");
+					++turned;
+					turn.addSeg(cn, 'v'+side, d);
+				}
+			}, this);
+		}, this);
+		console.assert(turned === cs.length, "turned all the yarns");
+		cells.push({i:yarnBeforeIndex(d, n), cell:turn});
+	}
+
+
 };
 
-CellMachine.prototype.bringCarrier = function CellMachine_bringCarrier(d, n, cn) {
-	//--- OLD OLD OLD OLD OLD OLD OLD OLD ---
-	console.assert(false, "OLD bringCarrier CODE");
-	
-	//set up yarn for a given stitch.
-	//post-condition: needle just before n in direction d has yarn from cn exiting via its top face.
-	// i.e. carrier is ready to make stitch at n in direction d, after (possibly) turning.
-	let c = this.getCarrier(cn);
-	let targetBed = needleBed(n);
 
-	if (!c.at) {
-		//add yarn-in cell at top of yarnBeforeIndex(d,n)
-		let cell = new YarnCell();
-		//add existing in/out:
-		let column = this.beds[targetBed].getColumn(yarnBeforeIndex(d,n));
-		if (column.length) {
-			column[column.length-1].ports['^'].forEach(function (cn) {
-				cell.addOut('v', cn);
-				cell.addOut('^', cn);
-			});
-		}
-		//add yarn start:
-		cell.addOut('^', cn);
-		this.addCells(targetBed, [{i:yarnBeforeIndex(d,n), cell:cell}]); //might increase this.topRow depending on if cell can be merged, otherwise will add *at* topRow.
-		c.at = {d:d, n:n};
-		return;
-	}
+CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells, cross) {
+	//to be used after building the yarn face
 
-	//okay, carrier is parked at index c.at, with yarn travelling up that column to the top:
-	let atBed = needleBed(c.at.n);
-	let atIndex = yarnBeforeIndex(c.at.d, c.at.n);
-	let targetIndex = yarnBeforeIndex(d, n);
-
-
-	//TODO: if atBed !== targetBed (...)
-	//TODO: really, in general, I guess yarn transit needs to happen on front bed with racking accounted for if there are crossings.
-
-	if (atBed !== targetBed) {
-		//move to target bed:
-		let cells = [];
+	//turn carriers back up:
+	if (cs.length) {
 		let turn = new YarnCell();
-		turn.addOut('v', cn);
-		turn.addOut((targetBed === 'f' ? 'o' : 'x'), cn);
-		cells.push({bed:atBed, i:atIndex, cell:turn});
-		let turn2 = new YarnCell();
-		turn2.addOut((targetBed === 'f' ? 'x' : 'o'), cn);
-		turn2.addOut('^', cn);
-		cells.push({i:atIndex, cell:turn2});
-		const cross = {
-			yarns:[cn],
-			b:atBed, i:atIndex,
-			b2:targetBed, i2:atIndex,
-			type:'y'
-		};
-		this.addCells(targetBed, cells, cross);
+
+		let column = this.beds[needleBed(n)].getColumn(yarnAfterIndex(d,n));
+		if (column.length) {
+			['-','+'].forEach(function(side){
+				column[column.length-1].ports['^'+side].forEach(function (cn) {
+					console.assert(cs.indexOf(cn) === -1, "shouldn't run into same yarn");
+					turn.addSeg(cn, 'v'+side, '^'+side);
+				}, this);
+			}, this);
+		}
+
+		let outSide = (d === '+' ? '-' : '+');
+
+		cs.forEach(function(cn){
+			turn.addSeg(cn, outSide, '^'+outSide);
+		}, this);
+		this.sortPort(turn.ports['^'+outSide]);
+		cells.push({i:yarnAfterIndex(d, n), cell:turn});
 	}
 
-	let cells = [];
-	//traverse yarn right to targetIndex:
-	if (atIndex < targetIndex) {
-		for (let i = atIndex; i <= targetIndex; ++i) {
-			if (i === atIndex) {
-				//start by turning to the right:
-				let turn = new YarnCell();
-				turn.addOut('v', cn);
-				turn.addOut('+', cn);
-				cells.push({i:i, cell:turn});
-			} else if (i < targetIndex) {
-				if (i % 2 === 0) { //loop crossing
-					let miss = new LoopCell('m');
-					miss.addOut('-', cn);
-					miss.addOut('+', cn);
-					cells.push({i:i, cell:miss});
-				} else { //yarn crossing
-					let miss = new YarnCell();
-					miss.addOut('-', cn);
-					miss.addOut('+', cn);
-					cells.push({i:i, cell:miss});
-				}
-			} else if (i === targetIndex) {
-				//end by turning up:
-				let turn = new YarnCell();
-				turn.addOut('-', cn);
-				turn.addOut('^', cn);
-				cells.push({i:i, cell:turn});
+	this.addCells(needleBed(n), cells, cross);
+
+	let frontD;
+	let frontN;
+	let crossTo = '';
+	let crossFrom = '';
+
+	//mark carriers:
+	if (needleBed(n) === 'f') {
+		frontD = d;
+		frontN = n;
+	} else { console.assert(needleBed(n) === 'b', "Only f/b at the moment");
+		frontD = d;
+		if (this.racking === Math.floor(this.racking)) {
+			//aligned racking:
+			frontN = 'f' + (needleIndex(n)/2 + Math.floor(this.racking));
+			crossFrom = 'o' + (d === '+' ? '-' : '+');
+			crossTo   = 'x' + (d === '+' ? '-' : '+');
+		} else { console.assert(Math.floor(this.racking)+0.25 === this.racking, "quarter pitch please");
+			//unaligned (e.g. quarter pitch) racking:
+			if (d === '+') {
+				frontN = 'f' + (needleIndex(n)/2 + Math.floor(this.racking) + 1);
+				frontD = '-';
+				crossFrom = 'o-';
+				crossTo   = 'X+';
+			} else { console.assert(d === '-', "+/- only");
+				frontN = 'f' + (needleIndex(n)/2 + Math.floor(this.racking));
+				frontD = '+';
+				crossFrom = 'o+';
+				crossTo   = 'X-';
 			}
 		}
-	}
 
-	//traverse yarn left to targetIndex:
-	if (atIndex > targetIndex) {
-		for (let i = atIndex; i >= targetIndex; --i) {
-			if (i === atIndex) {
-				//start by turning to the left:
-				let turn = new YarnCell();
-				turn.addOut('v', cn);
-				turn.addOut('-', cn);
-				cells.push({i:i, cell:turn});
-			} else if (i > targetIndex) {
-				if (i % 2 === 0) { //loop crossing
-					let miss = new LoopCell('m');
-					miss.addOut('+', cn);
-					miss.addOut('-', cn);
-					cells.push({i:i, cell:miss});
-				} else { //yarn crossing
-					let miss = new YarnCell();
-					miss.addOut('+', cn);
-					miss.addOut('-', cn);
-					cells.push({i:i, cell:miss});
-				}
-			} else if (i === targetIndex) {
-				//end by turning up:
-				let turn = new YarnCell();
-				turn.addOut('+', cn);
-				turn.addOut('^', cn);
-				cells.push({i:i, cell:turn});
-			}
+		if (cs.length) {
+			//detour: also add bridge from back bed
+
+			let cells = [];
+			let toFront = new YarnCell();
+			cs.forEach(function(cn){
+				toFront.addSeg(cn,'v' + (d === '+' ? '-' : '+'), crossFrom);
+			}, this);
+
+			cells.push({bed:'b', i:yarnAfterIndex(d,n), cell:toFront});
+
+			let fromBack = new YarnCell();
+
+			let front = this.beds['f'].getColumn(yarnAfterIndex(frontD, frontN));
+			['-','+'].forEach(function(side){
+				(front.length ? front[front.length-1].ports['^' + side] : []).forEach(function(cn) {
+					console.assert(cs.indexOf(cn) === -1, "shouldn't be over here");
+					fromBack.addSeg(cn, 'v'+side, '^'+side);
+				}, this);
+			}, this);
+
+			cs.forEach(function(cn){
+				fromBack.addSeg(cn, crossTo, '^' + (frontD === '+' ? '-' : '+'));
+			}, this);
+			this.sortPort(fromBack.ports['^' + (frontD === '+' ? '-' : '+')]);
+
+			cells.push({bed:'f', i:yarnAfterIndex(frontD, frontN), cell:fromBack});
+
+			const cross = {
+				yarns:cs.slice(),
+				b:'b', i:yarnAfterIndex(d,n), port:crossFrom,
+				b2:'f', i2:yarnAfterIndex(frontD,frontN), port2:crossTo,
+				type:'y'
+			};
+			this.addCells('f', cells, cross);
 		}
 	}
 
-	//this seems ~very~ suspicious:
-	cells.forEach(function(icell){
-		let bed = (icell.bed ? icell.bed : targetBed);
-		let c = this.beds[bed].getColumn(icell.i);
-		if (c.length) {
-			let have = icell.cell.ports['v'].slice();
-			c[c.length-1].ports['^'].forEach(function (cn) {
-				let idx = have.indexOf(cn);
-				if (idx !== -1) { //accounted for already.
-					have.splice(idx,1);
-					return;
-				}
-				//TODO: if bed === 'b', add at begin of ports
-				icell.cell.addOut('v', cn);
-				icell.cell.addOut('^', cn);
-			});
-		}
+	//record 'after' info:
+	cs.forEach(function(cn){
+		let c = this.getCarrier(cn);
+		console.assert('before' in c, "must have been brought");
+		console.assert(!('after' in c), "must have been brought, thus no after");
+		delete c.before;
+		c.after = {d:frontD, n:frontN};
 	}, this);
 
-	this.addCells(targetBed, cells);
 
-	c.at = {d:d, n:n};
 };
+
+
 
 //Required functions:
 
@@ -1320,132 +1311,13 @@ CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuc
 	let cells = [];
 
 	//Turn carriers toward the needle:
-	if (cs.length) {
-		let turn = new YarnCell();
-
-		let column = this.beds[needleBed(n)].getColumn(yarnBeforeIndex(d,n));
-		console.assert(column.length, "carriers must be here already");
-		let turned = 0;
-		['-','+'].forEach(function(side){
-			column[column.length-1].ports['^'+side].forEach(function (cn) {
-				if (cs.indexOf(cn) === -1) {
-					turn.addSeg(cn, 'v'+side, '^'+side);
-				} else {
-					console.assert(side === d, "should already be on the right side");
-					++turned;
-					turn.addSeg(cn, 'v'+side, d);
-				}
-			}, this);
-		}, this);
-		console.assert(turned === cs.length, "turned all the yarns");
-		cells.push({i:yarnBeforeIndex(d, n), cell:turn});
-	}
+	this.makeTurnBefore(d, n, cs, cells);
 
 	//add the face:
 	cells.push({i:needleIndex(n), cell:knitTuck});
 
-	//turn carriers back up:
-	if (cs.length) {
-		let turn = new YarnCell();
-
-		let column = this.beds[needleBed(n)].getColumn(yarnAfterIndex(d,n));
-		if (column.length) {
-			['-','+'].forEach(function(side){
-				column[column.length-1].ports['^'+side].forEach(function (cn) {
-					console.assert(cs.indexOf(cn) === -1, "shouldn't run into same yarn");
-					turn.addSeg(cn, 'v'+side, '^'+side);
-				}, this);
-			}, this);
-		}
-
-		let outSide = (d === '+' ? '-' : '+');
-
-		cs.forEach(function(cn){
-			turn.addSeg(cn, outSide, '^'+outSide);
-		}, this);
-		this.sortPort(turn.ports['^'+outSide]);
-		cells.push({i:yarnAfterIndex(d, n), cell:turn});
-	}
-
-	this.addCells(needleBed(n), cells);
-
-	let frontD;
-	let frontN;
-	let crossTo = '';
-	let crossFrom = '';
-
-	//mark carriers:
-	if (needleBed(n) === 'f') {
-		frontD = d;
-		frontN = n;
-	} else { console.assert(needleBed(n) === 'b', "Only f/b at the moment");
-		frontD = d;
-		if (this.racking === Math.floor(this.racking)) {
-			//aligned racking:
-			frontN = 'f' + (needleIndex(n)/2 + Math.floor(this.racking));
-			crossFrom = 'o' + (d === '+' ? '-' : '+');
-			crossTo   = 'x' + (d === '+' ? '-' : '+');
-		} else { console.assert(Math.floor(this.racking)+0.25 === this.racking, "quarter pitch please");
-			//unaligned (e.g. quarter pitch) racking:
-			if (d === '+') {
-				frontN = 'f' + (needleIndex(n)/2 + Math.floor(this.racking) + 1);
-				frontD = '-';
-				crossFrom = 'o-';
-				crossTo   = 'X+';
-			} else { console.assert(d === '-', "+/- only");
-				frontN = 'f' + (needleIndex(n)/2 + Math.floor(this.racking));
-				frontD = '+';
-				crossFrom = 'o+';
-				crossTo   = 'X-';
-			}
-		}
-
-		if (cs.length) {
-			//detour: also add bridge to back bed
-
-			let cells = [];
-			let toFront = new YarnCell();
-			cs.forEach(function(cn){
-				toFront.addSeg(cn,'v' + (d === '+' ? '-' : '+'), crossFrom);
-			}, this);
-
-			cells.push({bed:'b', i:yarnAfterIndex(d,n), cell:toFront});
-
-			let fromBack = new YarnCell();
-
-			let front = this.beds['f'].getColumn(yarnAfterIndex(frontD, frontN));
-			['-','+'].forEach(function(side){
-				(front.length ? front[front.length-1].ports['^' + side] : []).forEach(function(cn) {
-					console.assert(cs.indexOf(cn) === -1, "shouldn't be over here");
-					fromBack.addSeg(cn, 'v'+side, '^'+side);
-				}, this);
-			}, this);
-
-			cs.forEach(function(cn){
-				fromBack.addSeg(cn, crossTo, '^' + (frontD === '+' ? '-' : '+'));
-			}, this);
-			this.sortPort(fromBack.ports['^' + (frontD === '+' ? '-' : '+')]);
-
-			cells.push({bed:'f', i:yarnAfterIndex(frontD, frontN), cell:fromBack});
-
-			const cross = {
-				yarns:cs.slice(),
-				b:'b', i:yarnAfterIndex(d,n), port:crossFrom,
-				b2:'f', i2:yarnAfterIndex(frontD,frontN), port2:crossTo,
-				type:'y'
-			};
-			this.addCells('f', cells, cross);
-		}
-	}
-
-	//record 'after' info:
-	cs.forEach(function(cn){
-		let c = this.getCarrier(cn);
-		console.assert('before' in c, "must have been brought");
-		console.assert(!('after' in c), "must have been brought, thus no after");
-		delete c.before;
-		c.after = {d:frontD, n:frontN};
-	}, this);
+	//Do clean-up and marking:
+	this.makeAfter(d, n, cs, cells);
 
 };
 
@@ -1501,22 +1373,14 @@ CellMachine.prototype.tuck = function CellMachine_tuck(d, n, cs) {
 CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 	//TODO: splitting *nothing* is the same as tucking.
 
+
 	//Bring carriers on over:
-	cs.forEach(function(cn){
-		this.bringCarrier(d,n,cn);
-	}, this);
+	this.bringCarriers(d, n, cs);
 
 	let cells = [];
 
 	//Turn carriers toward the needle:
-	if (cs.length) {
-		let turn = new YarnCell();
-		cs.forEach(function(cn){
-			turn.addOut('v', cn);
-			turn.addOut(d, cn);
-		}, this);
-		cells.push({i:yarnBeforeIndex(d, n), cell:turn});
-	}
+	this.makeTurnBefore(d, n, cs, cells);
 
 	//add a pair of faces:
 	let xferFrom = new LoopCell((cs.length ? 's' : 'x'));
@@ -1570,20 +1434,8 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 
 	if (needleBed(n2) === 'f') addToLoops.call(this);
 
-	//turn carriers back up:
-	if (cs.length) {
-		let turn = new YarnCell();
-		let nextD = d;
-		let nextN = (d === '+' ? nextNeedle(n) : previousNeedle(n));
-		cs.forEach(function(cn){
-			turn.addOut((d === '+' ? '-' : '+'), cn);
-			turn.addOut('^', cn);
-			this.getCarrier(cn).at = {d:nextD, n:nextN};
-		}, this);
-		cells.push({i:yarnAfterIndex(d, n), cell:turn});
-	}
-
-	this.addCells(needleBed(n), cells, cross);
+	//Do clean-up and marking:
+	this.makeAfter(d, n, cs, cells, cross);
 };
 
 CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
