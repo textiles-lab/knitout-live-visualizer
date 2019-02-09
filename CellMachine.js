@@ -1590,15 +1590,6 @@ CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
 	//build a miss face:
 	let miss = new LoopCell('m');
 
-	let addBehind = (needleBed(n) === 'f');
-
-	if (addBehind) {
-		cs.forEach(function(cn){
-			miss.addOut((d === '+' ? '-' : '+'), cn);
-			miss.addOut(d, cn);
-		}, this);
-	}
-
 	//add loop inputs from the column:
 	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
 	if (c.length) {
@@ -1608,12 +1599,10 @@ CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
 		});
 	}
 
-	if (!addBehind) {
-		cs.forEach(function(cn){
-			miss.addOut((d === '+' ? '-' : '+'), cn);
-			miss.addOut(d, cn);
-		}, this);
-	}
+	cs.forEach(function(cn){
+		miss.addOut((d === '+' ? '-' : '+'), cn);
+		miss.addOut(d, cn);
+	}, this);
 
 	this.knitTuck(d, n, cs, miss);
 };
