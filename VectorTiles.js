@@ -3,7 +3,7 @@
 const VectorTiles = {};
 
 VectorTiles.LoopWidth = 13;
-VectorTiles.YarnWidth = 4;
+VectorTiles.YarnWidth = 7;
 VectorTiles.TileHeight = 9;
 
 function Drawing() {
@@ -15,8 +15,10 @@ function Drawing() {
 let defaultStyle = {color:'#f0f'};
 let freshKey = 0;
 
-Drawing.prototype.addLine = function Drawing_addLine(layer, styles, label, pts, ofs) {
+Drawing.prototype.addLine = function Drawing_addLine(layer, styles, label, pts, ofs, z) {
 	if (typeof(ofs) === 'undefined') ofs = {x:0.0, y:0.0};
+	if (typeof(z) === 'undefined') z = 0;
+
 	let style = styles[label];
 	if (!style) style = defaultStyle;
 	if (!('key' in style)) {
@@ -33,7 +35,10 @@ Drawing.prototype.addLine = function Drawing_addLine(layer, styles, label, pts, 
 			pts[i+1] += ofs.y;
 		}
 	}
-	g.lines.push(pts);
+	while (z >= g.lines.length) {
+		g.lines.push([]);
+	}
+	g.lines[z].push(pts);
 };
 
 VectorTiles.makeDrawing = function Vectortiles_makeDrawing() {
@@ -104,17 +109,25 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 	}
 
 	function drawGroups(layer, layerTintRGBA) {
-		for (let sk in layer) {
-			let g = layer[sk];
-			ctx.strokeStyle = tint(g.style.color, layerTintRGBA);
-			ctx.beginPath();
-			g.lines.forEach(function(line){
-				ctx.moveTo(line[0], line[1]);
-				for (let i = 2; i < line.length; i += 2) {
-					ctx.lineTo(line[i], line[i+1]);
-				}
-			});
-			ctx.stroke();
+		let again = true;
+		let z = 0;
+		while (again) {
+			again = false;
+			for (let sk in layer) {
+				let g = layer[sk];
+				if (z >= layer[sk].lines.length) continue;
+				again = true;
+				ctx.strokeStyle = tint(g.style.color, layerTintRGBA);
+				ctx.beginPath();
+				g.lines[z].forEach(function(line){
+					ctx.moveTo(line[0], line[1]);
+					for (let i = 2; i < line.length; i += 2) {
+						ctx.lineTo(line[i], line[i+1]);
+					}
+				});
+				ctx.stroke();
+			}
+			z += 1;
 		}
 	}
 
@@ -126,10 +139,12 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 		let g = drawing.middle[sk];
 		ctx.strokeStyle = tint(g.style.color, middleTintRGBA);
 		ctx.beginPath();
-		g.lines.forEach(function(line){
-			console.assert(line.length === 4, "bridges should be [fx,fy,bx,by]");
-			ctx.moveTo(line[0] + frontOfs.x, line[1] + frontOfs.y);
-			ctx.lineTo(line[2] + backOfs.x, line[3] + backOfs.y);
+		g.lines.forEach(function(lines,z) {
+			lines.forEach(function(line){
+				console.assert(line.length === 4, "bridges should be [fx,fy,bx,by]");
+				ctx.moveTo(line[0] + frontOfs.x, line[1] + frontOfs.y);
+				ctx.lineTo(line[2] + backOfs.x, line[3] + backOfs.y);
+			});
 		});
 		ctx.stroke();
 	}
@@ -173,6 +188,48 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 	console.assert(typeof(cross.b) === 'string' && typeof(cross.b2) === 'string', "Expecting cross to have b, b2 strings");
 	console.assert(Array.isArray(cross.yarns), "Expecting cross to have 'yarns' array.");
 
+	if (cross.type === 'y') {
+		console.assert(typeof(cross.port) === 'string' && typeof(cross.port2) === 'string', "Expecting cross of yarn type to have port, port2 strings");
+
+		let ports = {
+			'o-':{x:0.5, y0:6.5, y1:5.5},
+			'x-':{x:0.5, y0:6.5, y1:5.5},
+			'O-':{x:3.5, y0:6.5, y1:5.5},
+			'X-':{x:3.5, y0:6.5, y1:5.5},
+			'O+':{x:3.5, y0:6.5, y1:5.5},
+			'X+':{x:3.5, y0:6.5, y1:5.5},
+			'o+':{x:6.5, y0:6.5, y1:5.5},
+			'x+':{x:6.5, y0:6.5, y1:5.5}
+		};
+
+		console.assert(cross.port in ports && cross.port2 in ports, "Expecting cross of yarn type to have known port, port2 strings");
+
+		let pf, pb;
+
+		let front, back;
+		if (cross.b === 'f') {
+			front = tileLowerLeft(cross.i, cross.y);
+			pf = ports[cross.port];
+			back = tileLowerLeft(cross.i2, cross.y);
+			pb = ports[cross.port2];
+		} else {
+			front = tileLowerLeft(cross.i2, cross.y);
+			pf = ports[cross.port2];
+			back = tileLowerLeft(cross.i, cross.y);
+			pb = ports[cross.port];
+		}
+
+		if (cross.yarns.length >= 1) {
+			let l0 = cross.yarns[0];
+			drawing.addLine(drawing.middle, cross.styles, l0, [front.x+pf.x, front.y+pf.y0, back.x+pb.x, back.y+pb.y0]);
+		}
+		if (cross.yarns.length >= 2) {
+			let l1 = cross.yarns.slice(1).join(' ');
+			drawing.addLine(drawing.middle, cross.styles, l1, [front.x+pf.x, front.y+pf.y1, back.x+pb.x, back.y+pb.y1]);
+		}
+		return;
+	}
+
 	let l,r;
 	let y1 = 5.5;
 	let y2 = 6.5;
@@ -182,10 +239,6 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 	} else if (cross.type === 's') {
 		l = 1.5;
 		r = 11.5;
-	} else if (cross.type === 'y') {
-		l = 2.0;
-		r = NaN;
-		y1 = y2 = 6.5;
 	} else {
 		console.assert(false, "Unknown cross type.");
 	}
@@ -206,16 +259,12 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 	if (cross.yarns.length >= 1) {
 		let l0 = cross.yarns[0];
 		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+l, front.y, back.x+l, back.y ]);
-		if (r === r) {
-			drawing.addLine(drawing.middle, cross.styles, l0, [front.x+r, front.y, back.x+r, back.y ]);
-		}
+		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+r, front.y, back.x+r, back.y ]);
 	}
 	if (cross.yarns.length >= 2) {
 		let l1 = cross.yarns.slice(1).join(' ');
 		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+l+1.0, front.y, back.x+l+1.0, back.y ]);
-		if (r === r) {
-			drawing.addLine(drawing.middle, cross.styles, l1, [front.x+r-1.0, front.y, back.x+r-1.0, back.y ]);
-		}
+		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+r-1.0, front.y, back.x+r-1.0, back.y ]);
 	}
 };
 
@@ -506,11 +555,25 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 	return g;
 };
 
-VectorTiles.addYarnTile = function VectorTiles_addYarnTile(drawing, styles, tile) {
+//                  
+//   0 1 2 3 4 5 6
+// 8 . B A . B A .
+// 7 . B A . B A .
+// 6 x B A x B A x
+// 5 x B A x B A x
+// 4 a B A a B A a
+// 3 b B A b B A b
+// 2 . B A . B A .
+// 1 . B A . B A .
+// 0 . B A . B A .
+
+VectorTiles.addYarnTile = function VectorTiles_addYarnTile(drawing, styles, tile, carriers) {
 	console.assert(typeof(tile.y) === 'number', "Expecting bed height in yarn tile");
 	console.assert(typeof(tile.i) === 'number', "Expecting index in yarn tile");
 	console.assert(typeof(tile.bed) === 'string', "Expecting bed in yarn tile");
 	console.assert(typeof(tile.ports) === 'object', "Expecting ports in yarn tile");
+	console.assert(Array.isArray(carriers), "Expecting carriers list for sorting");
+
 	const bed = tile.bed;
 	const ports = tile.ports;
 
@@ -521,31 +584,54 @@ VectorTiles.addYarnTile = function VectorTiles_addYarnTile(drawing, styles, tile
 		}
 		locs[yarn].push(x,y);
 	}
-	ports['^'].forEach(function(y){ addLoc(y, 2.0, 9.0); });
-	ports['v'].forEach(function(y){ addLoc(y, 2.0, 0.0); });
+	ports['^+'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 5.5 : 4.5), 9.0); });
+	ports['v+'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 5.5 : 4.5), 0.0); });
+	ports['^-'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 2.5 : 1.5), 9.0); });
+	ports['v-'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 2.5 : 1.5), 0.0); });
+
+	ports['o-'].forEach(function(y, yi){ addLoc(y, 0.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['x-'].forEach(function(y, yi){ addLoc(y, 0.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['O-'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['X-'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['O+'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['X+'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['o+'].forEach(function(y, yi){ addLoc(y, 6.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['x+'].forEach(function(y, yi){ addLoc(y, 6.5, (yi === 0 ? 6.5 : 5.5)); });
+
 	ports['-'].forEach(function(y, yi){ addLoc(y, 0.0, (yi === 0 ? 4.5 : 3.5)); });
-	ports['+'].forEach(function(y, yi){ addLoc(y, 4.0, (yi === 0 ? 4.5 : 3.5)); });
-	ports['o'].forEach(function(y){ addLoc(y, 2.0, 6.5); });
-	ports['x'].forEach(function(y){ addLoc(y, 2.0, 6.5); });
+	ports['+'].forEach(function(y, yi){ addLoc(y, 7.0, (yi === 0 ? 4.5 : 3.5)); });
 
 	let layer = (bed === 'f' ? drawing.front : drawing.back);
 
 	let ll = tileLowerLeft(tile.i, tile.y);
 
 	for (let yn in locs) {
+		let idx = -1;
+		carriers.forEach(function(c,ci){
+			if(c.name === yn){
+				idx = ci;
+			}
+		});
+		console.assert(idx !== -1, "All yarns should appear in carriers");
+	}
+	carriers.forEach(function(c){
+		if (!(c.name in locs)) return;
+		let yn = c.name;
+		let z = carriers.length - 1 - c.index; //> z => more in front
+	//for (let yn in locs) {
 		let list = locs[yn];
 		if (list.length === 2) {
 			drawing.addLine(layer, styles, yn, [
-				2.0, 5.5, list[0], list[1]
-			], ll);
+				3.5, 5.5, list[0], list[1]
+			], ll, z);
 		} else if (list.length === 4) {
 			drawing.addLine(layer, styles, yn, [
 				list[0], list[1], list[2], list[3]
-			], ll);
+			], ll, z);
 		} else {
 			console.warn("yarn tile mentions yarn " + list.length + " times.");
 		}
-	}
+	});
 };
 
 

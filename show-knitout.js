@@ -350,11 +350,11 @@ ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
 				//yarns:
 				if (f) {
 					this.grids.f[y * this.columns + (i - minIndex)] = f;
-					TileSet.addYarnTile(this.drawing, f.styles, {i:i, y:y, bed:'f', ports:f.ports});
+					TileSet.addYarnTile(this.drawing, f.styles, {i:i, y:y, bed:'f', ports:f.ports}, machine.carriers);
 				}
 				if (b) {
 					this.grids.b[y * this.columns + (i - minIndex)] = b;
-					TileSet.addYarnTile(this.drawing, b.styles, {i:i, y:y, bed:'b', ports:b.ports});
+					TileSet.addYarnTile(this.drawing, b.styles, {i:i, y:y, bed:'b', ports:b.ports}, machine.carriers);
 				}
 			}
 		}
