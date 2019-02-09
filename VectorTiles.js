@@ -572,65 +572,56 @@ VectorTiles.addYarnTile = function VectorTiles_addYarnTile(drawing, styles, tile
 	console.assert(typeof(tile.i) === 'number', "Expecting index in yarn tile");
 	console.assert(typeof(tile.bed) === 'string', "Expecting bed in yarn tile");
 	console.assert(typeof(tile.ports) === 'object', "Expecting ports in yarn tile");
+	console.assert(typeof(tile.segs) === 'object', "Expecting segs in yarn tile");
 	console.assert(Array.isArray(carriers), "Expecting carriers list for sorting");
 
 	const bed = tile.bed;
 	const ports = tile.ports;
+	const segs = tile.segs;
 
 	let locs = {};
-	function addLoc(yarn, x, y) {
-		if (!(yarn in locs)) {
-			locs[yarn] = [];
-		}
-		locs[yarn].push(x,y);
+	function addLoc(yarn, port, x, y) {
+		console.assert(!((yarn + port) in locs), 'yarns visit ports once');
+		locs[yarn + port] = {x:x, y:y};
 	}
-	ports['^+'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 5.5 : 4.5), 9.0); });
-	ports['v+'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 5.5 : 4.5), 0.0); });
-	ports['^-'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 2.5 : 1.5), 9.0); });
-	ports['v-'].forEach(function(y, yi){ addLoc(y, (yi === 0 ? 2.5 : 1.5), 0.0); });
+	ports['^+'].forEach(function(y, yi){ addLoc(y, '^+', (yi === 0 ? 5.5 : 4.5), 9.0); });
+	ports['v+'].forEach(function(y, yi){ addLoc(y, 'v+', (yi === 0 ? 5.5 : 4.5), 0.0); });
+	ports['^-'].forEach(function(y, yi){ addLoc(y, '^-', (yi === 0 ? 2.5 : 1.5), 9.0); });
+	ports['v-'].forEach(function(y, yi){ addLoc(y, 'v-', (yi === 0 ? 2.5 : 1.5), 0.0); });
 
-	ports['o-'].forEach(function(y, yi){ addLoc(y, 0.5, (yi === 0 ? 6.5 : 5.5)); });
-	ports['x-'].forEach(function(y, yi){ addLoc(y, 0.5, (yi === 0 ? 6.5 : 5.5)); });
-	ports['O-'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
-	ports['X-'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
-	ports['O+'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
-	ports['X+'].forEach(function(y, yi){ addLoc(y, 3.5, (yi === 0 ? 6.5 : 5.5)); });
-	ports['o+'].forEach(function(y, yi){ addLoc(y, 6.5, (yi === 0 ? 6.5 : 5.5)); });
-	ports['x+'].forEach(function(y, yi){ addLoc(y, 6.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['o-'].forEach(function(y, yi){ addLoc(y, 'o-', 0.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['x-'].forEach(function(y, yi){ addLoc(y, 'x-', 0.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['O-'].forEach(function(y, yi){ addLoc(y, 'O-', 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['X-'].forEach(function(y, yi){ addLoc(y, 'X-', 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['O+'].forEach(function(y, yi){ addLoc(y, 'O+', 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['X+'].forEach(function(y, yi){ addLoc(y, 'X+', 3.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['o+'].forEach(function(y, yi){ addLoc(y, 'o+', 6.5, (yi === 0 ? 6.5 : 5.5)); });
+	ports['x+'].forEach(function(y, yi){ addLoc(y, 'x+', 6.5, (yi === 0 ? 6.5 : 5.5)); });
 
-	ports['-'].forEach(function(y, yi){ addLoc(y, 0.0, (yi === 0 ? 4.5 : 3.5)); });
-	ports['+'].forEach(function(y, yi){ addLoc(y, 7.0, (yi === 0 ? 4.5 : 3.5)); });
+	ports['-'].forEach(function(y, yi){ addLoc(y, '-', 0.0, (yi === 0 ? 4.5 : 3.5)); });
+	ports['+'].forEach(function(y, yi){ addLoc(y, '+', 7.0, (yi === 0 ? 4.5 : 3.5)); });
 
 	let layer = (bed === 'f' ? drawing.front : drawing.back);
 
 	let ll = tileLowerLeft(tile.i, tile.y);
 
-	for (let yn in locs) {
-		let idx = -1;
-		carriers.forEach(function(c,ci){
-			if(c.name === yn){
-				idx = ci;
-			}
+	segs.forEach(function(seg) {
+		let from = {x:3.5, y:5.5};
+		let to = {x:3.5, y:5.5};
+		if (seg.from != '') from = locs[seg.cn + seg.from];
+		if (seg.to != '') to = locs[seg.cn + seg.to];
+
+		let index = -1;
+		carriers.forEach(function(c) {
+			if (c.name == seg.cn) index = c.index;
 		});
-		console.assert(idx !== -1, "All yarns should appear in carriers");
-	}
-	carriers.forEach(function(c){
-		if (!(c.name in locs)) return;
-		let yn = c.name;
-		let z = carriers.length - 1 - c.index; //> z => more in front
-	//for (let yn in locs) {
-		let list = locs[yn];
-		if (list.length === 2) {
-			drawing.addLine(layer, styles, yn, [
-				3.5, 5.5, list[0], list[1]
-			], ll, z);
-		} else if (list.length === 4) {
-			drawing.addLine(layer, styles, yn, [
-				list[0], list[1], list[2], list[3]
-			], ll, z);
-		} else {
-			console.warn("yarn tile mentions yarn " + list.length + " times.");
-		}
+		console.assert(index !== -1, "yarns should be in carriers");
+
+		let z = carriers.length - 1 - index; //> z => more in front
+
+		drawing.addLine(layer, styles, seg.cn, [
+			from.x, from.y, to.x, to.y
+		], ll, z);
 	});
 };
 
