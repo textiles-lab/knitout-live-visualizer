@@ -135,6 +135,7 @@ YarnCell.prototype.canAbsorb = function YarnCell_canAbsorb(below) {
 
 YarnCell.prototype.absorb = function YarnCell_absorb(below) {
 
+	/*
 	//DEBUG:
 	console.log("Absorb:");
 	//console.log(JSON.stringify(this.segs));
@@ -153,7 +154,7 @@ YarnCell.prototype.absorb = function YarnCell_absorb(below) {
 		+ JSON.stringify(below.ports['v-'])
 		+ JSON.stringify(below.ports['v+'])
 		);
-
+	*/
 
 
 	let connect = { '-':{}, '+':{} };
@@ -229,6 +230,7 @@ YarnCell.prototype.absorb = function YarnCell_absorb(below) {
 		this.ports[pn] = orders[pn];
 	}
 
+	/*
 	//DEBUG
 	//console.log(" --> " + JSON.stringify(this.segs));
 	console.log(" ---> " +
@@ -238,7 +240,7 @@ YarnCell.prototype.absorb = function YarnCell_absorb(below) {
 		+ JSON.stringify(this.ports['v-'])
 		+ JSON.stringify(this.ports['v+'])
 		);
-
+	*/
 
 };
 
@@ -978,6 +980,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 		this.sortPort(turn.ports[outSide]);
 		cells.push({i:targetIndex, cell:turn});
 	}
+	/*
 	//DEBUG:
 	console.log("----");
 	cells.forEach(function(cell){
@@ -992,6 +995,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 		}
 	});
 	console.log(cells); //DEBUG
+	*/
 
 	this.addCells('f', cells);
 
@@ -1273,10 +1277,20 @@ CellMachine.prototype.out = function CellMachine_out(cs) {
 			let column = this.beds[needleBed(c.after.n)].getColumn(yarnAfterIndex(c.after.d,c.after.n));
 			console.assert(column.length, "can't take a carrier out of an empty yarn column");
 			let cell = column[column.length-1];
-			let port = cell.ports[(c.after.d === '+' ? '^-' : '^+')];
+			let portName = (c.after.d === '+' ? '^-' : '^+')
+			let port = cell.ports[portName];
 			let idx = port.indexOf(cn);
 			console.assert(idx !== -1, "must have yarn in column where it's being removed");
 			port.splice(idx, 1);
+			let found = false;
+			cell.segs.forEach(function(seg){
+				if (seg.cn === cn && seg.to === portName) {
+					console.assert(!found, "only one seg");
+					found = true;
+					seg.to = '';
+				}
+			}, this);
+			console.assert(found, "exactly one seg");
 
 			delete c.after;
 		}
@@ -1573,9 +1587,35 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 };
 
 CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
-	cs.forEach(function(cn){
-		this.bringCarrier(d,n,cn);
-	}, this);
+	//build a miss face:
+	let miss = new LoopCell('m');
+
+	let addBehind = (needleBed(n) === 'f');
+
+	if (addBehind) {
+		cs.forEach(function(cn){
+			miss.addOut((d === '+' ? '-' : '+'), cn);
+			miss.addOut(d, cn);
+		}, this);
+	}
+
+	//add loop inputs from the column:
+	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
+	if (c.length) {
+		c[c.length-1].ports['^'].forEach(function (cn) {
+			miss.addOut('v', cn);
+			miss.addOut('^', cn);
+		});
+	}
+
+	if (!addBehind) {
+		cs.forEach(function(cn){
+			miss.addOut((d === '+' ? '-' : '+'), cn);
+			miss.addOut(d, cn);
+		}, this);
+	}
+
+	this.knitTuck(d, n, cs, miss);
 };
 
 CellMachine.prototype.pause = function CellMachine_pause() { /* nothing */ };

@@ -287,16 +287,16 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 	let layer = (bed === 'f' ? drawing.front : drawing.back);
 	let ll = tileLowerLeft(tile.i, tile.y);
 
-	function doLoops() {
+	function doLoops(z) {
 		if (loops.length >= 1) {
 			let l0 = loops[0];
-			drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 9.0 ], ll);
-			drawing.addLine(layer, styles, l0, [ 8.5, 0.0, 8.5, 9.0 ], ll);
+			drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 9.0 ], ll, z);
+			drawing.addLine(layer, styles, l0, [ 8.5, 0.0, 8.5, 9.0 ], ll, z);
 		}
 		if (loops.length >= 2) {
 			let l1 = loops.slice(1).join(' ');
-			drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 9.0 ], ll);
-			drawing.addLine(layer, styles, l1, [ 7.5, 0.0, 7.5, 9.0 ], ll);
+			drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 9.0 ], ll, z);
+			drawing.addLine(layer, styles, l1, [ 7.5, 0.0, 7.5, 9.0 ], ll, z);
 		}
 	};
 
@@ -393,44 +393,44 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 			}
 		}
 	} else if (type === 't') {
-		if (bed === 'b') doLoops();
+		if (bed === 'b') doLoops(0);
 		if (yarns.length >= 1) {
 			let y0 = yarns[0];
-			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll);
-			drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, 13.0, 4.5 ], ll);
+			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll, 1);
+			drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, 13.0, 4.5 ], ll, 1);
 			if (yarns.length >= 2) {
 				let y1 = yarns.slice(1).join(' ');
-				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, 13.0, 3.5 ], ll);
+				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll, 1);
+				drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, 13.0, 3.5 ], ll, 1);
 			}
 		}
-		if (bed === 'f') doLoops();
+		if (bed === 'f') doLoops(2);
 	} else if (type === 'm') {
-		if (bed === 'b') doLoops();
+		if (bed === 'b') doLoops(0);
 		if (yarns.length >= 1) {
 			let y0 = yarns[0];
-			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 13.0, 4.5], ll);
+			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 13.0, 4.5], ll, 1);
 			if (yarns.length >= 2) {
 				let y1 = yarns.slice(1).join(' ');
-				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 13.0, 3.5 ], ll);
+				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 13.0, 3.5 ], ll, 1);
 			}
 		}
-		if (bed === 'f') doLoops();
+		if (bed === 'f') doLoops(2);
 	} else if (type === 'S') {
-		if (bed === 'b') doLoops();
+		if (bed === 'b') doLoops(0);
 		if (across.length >= 1) {
 			let a0 = across[0];
-			drawing.addLine(layer, styles, a0, [ 1.5, 6.5, 1.5, 7.5, 4.5, 7.5, 4.5, 9.0 ], ll);
-			drawing.addLine(layer, styles, a0, [ 11.5, 6.5, 11.5, 7.5, 8.5, 7.5, 8.5, 9.0 ], ll);
+			drawing.addLine(layer, styles, a0, [ 1.5, 6.5, 1.5, 7.5, 4.5, 7.5, 4.5, 9.0 ], ll, 1);
+			drawing.addLine(layer, styles, a0, [ 11.5, 6.5, 11.5, 7.5, 8.5, 7.5, 8.5, 9.0 ], ll, 1);
 
 			if (across.length >= 2) {
 				let a1 = across.slice(1).join(' ');
-				drawing.addLine(layer, styles, a1, [ 2.5, 6.5, 5.5, 6.5, 5.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, a1, [ 10.5, 6.5, 7.5, 6.5, 7.5, 9.0 ], ll);
+				drawing.addLine(layer, styles, a1, [ 2.5, 6.5, 5.5, 6.5, 5.5, 9.0 ], ll, 1);
+				drawing.addLine(layer, styles, a1, [ 10.5, 6.5, 7.5, 6.5, 7.5, 9.0 ], ll, 1);
 			}
 		}
 
-		if (bed === 'f') doLoops();
+		if (bed === 'f') doLoops(2);
 	} else if (type === 's') {
 		if (yarns.length >= 1 && loops.length >= 1) {
 			//TODO: loops === across, right?
@@ -608,8 +608,14 @@ VectorTiles.addYarnTile = function VectorTiles_addYarnTile(drawing, styles, tile
 	segs.forEach(function(seg) {
 		let from = {x:3.5, y:5.5};
 		let to = {x:3.5, y:5.5};
-		if (seg.from != '') from = locs[seg.cn + seg.from];
-		if (seg.to != '') to = locs[seg.cn + seg.to];
+		if (seg.from != '') {
+			console.assert((seg.cn + seg.from) in locs, "Must have loc for " + seg.cn + seg.from);
+			from = locs[seg.cn + seg.from];
+		}
+		if (seg.to != '') {
+			console.assert((seg.cn + seg.to) in locs, "Must have loc for " + seg.cn + seg.to);
+			to = locs[seg.cn + seg.to];
+		}
 
 		let index = -1;
 		carriers.forEach(function(c) {
