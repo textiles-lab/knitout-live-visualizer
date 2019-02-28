@@ -8,7 +8,9 @@ VectorTiles.TileHeight = 9;
 
 function Drawing() {
 	this.back = {}; //{ style:{style: , lines:[ [x0, y0, x1, y1, ... ], ... ]}, ... }
+	this.backSliders = {};
 	this.middle = {};
+	this.frontSliders = {};
 	this.front = {};
 }
 
@@ -66,6 +68,8 @@ function yarnStyle(y, colors) {
 VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 	let frontOfs = options.frontOfs || {x:0.0, y:0.0};
 	let backOfs = options.backOfs || {x:0.0, y:0.0};
+	let frontSlidersOfs = options.frontSlidersOfs || {x:0.75 * frontOfs.x + 0.25 * backOfs.y, y: 0.75 * frontOfs.x + 0.25 * backOfs.y};
+	let backSlidersOfs = options.backSlidersOfs || {x:0.25 * frontOfs.x + 0.75 * backOfs.y, y: 0.25 * frontOfs.x + 0.75 * backOfs.y};
 	let frontTintRGBA = options.frontTintRGBA || [1.0, 1.0, 1.0, 0.0];
 	let middleTintRGBA = options.middleTintRGBA || [1.0, 1.0, 1.0, 0.0];
 	let backTintRGBA = options.backTintRGBA || [1.0, 1.0, 1.0, 0.0];
@@ -135,6 +139,10 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 	drawGroups(drawing.back, backTintRGBA);
 	ctx.translate(-backOfs.x, -backOfs.y);
 
+	ctx.translate(backSlidersOfs.x, backSlidersOfs.y);
+	drawGroups(drawing.backSliders, backTintRGBA);
+	ctx.translate(-backSlidersOfs.x, -backSlidersOfs.y);
+
 	for (let sk in drawing.middle) {
 		let g = drawing.middle[sk];
 		ctx.strokeStyle = tint(g.style.color, middleTintRGBA);
@@ -149,6 +157,9 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 		ctx.stroke();
 	}
 
+	ctx.translate(frontSlidersOfs.x, frontSlidersOfs.y);
+	drawGroups(drawing.frontSliders, frontTintRGBA);
+	ctx.translate(-frontSlidersOfs.x, -frontSlidersOfs.y);
 
 	ctx.translate(frontOfs.x, frontOfs.y);
 	drawGroups(drawing.front, frontTintRGBA);
@@ -284,7 +295,12 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 	const across = tile.across;
 	if (loops.length === 0 && yarns.length === 0 && across.length === 0) return null;
 
-	let layer = (bed === 'f' ? drawing.front : drawing.back);
+	let layer = {
+		'b': drawing.back,
+		'bs': drawing.backSliders,
+		'fs': drawing.frontSliders,
+		'f': drawing.front
+	}[bed];
 	let ll = tileLowerLeft(tile.i, tile.y);
 
 	function doLoops(z) {
@@ -601,7 +617,12 @@ VectorTiles.addYarnTile = function VectorTiles_addYarnTile(drawing, styles, tile
 	ports['-'].forEach(function(y, yi){ addLoc(y, '-', 0.0, (yi === 0 ? 4.5 : 3.5)); });
 	ports['+'].forEach(function(y, yi){ addLoc(y, '+', 7.0, (yi === 0 ? 4.5 : 3.5)); });
 
-	let layer = (bed === 'f' ? drawing.front : drawing.back);
+	let layer = {
+		'b': drawing.back,
+		'bs': drawing.backSliders,
+		'fs': drawing.frontSliders,
+		'f': drawing.front
+	}[bed];
 
 	let ll = tileLowerLeft(tile.i, tile.y);
 

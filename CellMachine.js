@@ -126,7 +126,7 @@ YarnCell.prototype.canAbsorb = function YarnCell_canAbsorb(below) {
 	if (['-','+','x-','X-','X+','x+','o-','O-','O+','o+'].some(function(pn){
 		return below.ports[pn].length && this.ports[pn].length;
 	}, this)) {
-		console.log("  NO: overlap"); //DEBUG
+		//console.log("  NO: overlap"); //DEBUG
 		return false;
 	}
 
@@ -298,6 +298,8 @@ function CellMachine() {
 	this.carriers = []; //carriers, front-to-back. Each is {name:"A", after:{n:, d:}, index:}
 	this.beds = {
 		b:new Columns(),
+		bs:new Columns(),
+		fs:new Columns(),
 		f:new Columns()
 	};
 	this.crosses = []; //<-- yarn crossings between beds
@@ -1009,11 +1011,11 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 
 		let front = this.beds['f'].getColumn(targetIndex);
 
-		console.log(JSON.stringify(front)); //DEBUG
+		//console.log(JSON.stringify(front)); //DEBUG
 		let found = 0;
 		['-','+'].forEach(function(side){
 			let up = (front.length ? front[front.length-1].ports['^'+side] : []);
-			console.log(side + ": " + JSON.stringify(up)); //DEBUG
+			//console.log(side + ": " + JSON.stringify(up)); //DEBUG
 			up.forEach(function(cn){
 				if (cs.indexOf(cn) !== -1) {
 					console.assert(targetSide === side, "all yarns should be on correct side");
@@ -1023,7 +1025,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 				}
 			}, this);
 		}, this);
-		console.log(cs); //DEBUG
+		//console.log(cs); //DEBUG
 		console.assert(found === cs.length, "got all carriers");
 
 		cs.forEach(function(cn){
