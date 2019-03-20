@@ -309,6 +309,7 @@ function CellMachine() {
 	this.racking = 0.0; //<-- racking, N or N + 0.25
 
 	this.defaultStyles = {};
+	this.currentSource = ""; //<-- current source line from ;!source: comments; will be passed 
 };
 
 //Helpers:
@@ -744,6 +745,7 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 				column.pop();
 			}
 		}
+		icell.cell.source = this.currentSource;
 		column.push(icell.cell);
 	}, this);
 
@@ -1201,8 +1203,10 @@ CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells
 };
 
 
-
 //Required functions:
+CellMachine.prototype.source = function CellMachine_source(source) {
+	this.currentSource = source;
+};
 
 CellMachine.prototype.setCarriers = function CellMachine_setCarriers(carriers) {
 	function makeStyle(cn, ci) {

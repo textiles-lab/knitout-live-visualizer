@@ -66,8 +66,14 @@ function parseKnitout(codeText, machine) {
 		}
 		var tokens = m[1].split(/[ \t]+/);
 		var comment = m[2];
+		var source = undefined;
 
-		//TODO: handle !source: directive in comment
+		//handle !source: directive in comment
+		if (comment && comment.startsWith(';!source:')) {
+			if ('source' in machine) {
+				machine.source(comment.substr(9));
+			}
+		}
 
 		//trim leading/trailing whitespace from operation token list:
 		if (tokens.length !== 0 && tokens[0] === "") tokens.shift();

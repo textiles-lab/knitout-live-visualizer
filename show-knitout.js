@@ -14,14 +14,11 @@ function ShowKnitout(canvas) {
 	this.canvas = canvas;
 	this.ctx = canvas.getContext('2d');
 
-	this.code = document.getElementById(canvas.dataset.code);
-
 	//these are used to do stitch selection and view panning:
 	this.clearDrawing();
 
 	this.show = SHOW_BOTH;
 
-	this.reparse();
 	this.camera = {
 		x: 0.0,
 		y: 0.0,
@@ -104,6 +101,15 @@ function ShowKnitout(canvas) {
 			return false;
 		}
 	});
+	canvas.addEventListener('mousedown', function(evt){
+		evt.preventDefault();
+		if (me.hovered && me.hovered.tile.source) {
+			if (me.clickLine) {
+				me.clickLine(me.hovered.tile.source);
+			}
+		}
+		return false;
+	});
 }
 
 
@@ -168,6 +174,7 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	//update selection:
 	let mx = (this.mouse.x - this.currentTransform[4]) / this.currentTransform[0];
 	let my = (this.mouse.y - this.currentTransform[5]) / this.currentTransform[3];
+	let oldHovered = this.hovered;
 	this.hovered = null;
 	let row = Math.floor((my - this.min.y) / TileSet.TileHeight);
 	if (row >= 0 && row < this.rows && this.min.x <= mx && mx <= this.max.x) {
@@ -198,9 +205,13 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 
 	//draw selection:
 	if (this.hovered) {
-		const x = this.columnX[this.hovered.col];
+		let x = this.columnX[this.hovered.col];
 		const width = (this.hovered.col + 1 < this.columnX.length ? this.columnX[this.hovered.col+1] : this.width) - x;
-		const y = TileSet.TileHeight * this.hovered.row;
+		let y = TileSet.TileHeight * this.hovered.row;
+		if (this.hovered.bed === 'b') {
+			x += -0.15 * TileSet.LoopWidth;
+			y += 0.2 * TileSet.TileHeight;
+		}
 		const height = TileSet.TileHeight;
 		ctx.beginPath();
 		ctx.moveTo(x,y);
@@ -210,6 +221,12 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		ctx.closePath();
 		ctx.strokeStyle = (this.hovered.bed === 'f' ? '#fff' : '#ddd');
 		ctx.stroke();
+	}
+
+	if (this.hovered !== this.oldHovered) {
+		if (this.highlightLine) {
+			this.highlightLine(this.hovered ? this.hovered.tile.source : "");
+		}
 	}
 
 	//DEBUG: draw mouse:
@@ -279,8 +296,7 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 	}
 };
 
-ShowKnitout.prototype.reparse = function ShowKnitout_reparse() {
-	const codeText = this.code.innerText;
+ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 
 	const machine = new CellMachine();
 	try {
