@@ -1,5 +1,4 @@
 "use strict";
-
 //parseKnitout will parse knitout, catch syntax errors, and dispatch to calls on 'machine', an abstract knitting machine:
 function parseKnitout(codeText, machine) {
 	var errors = [];
@@ -9,10 +8,10 @@ function parseKnitout(codeText, machine) {
 
 	var inCommentHeader = true;
 	var end = false;
-	
+
 	codeText.split("\n").forEach(function(line, lineNumber) {
 		if (end) return;
-		console.log(lineNumber + ": " + line); //DEBUG
+		//console.log(lineNumber + ": " + line); //DEBUG
 		function addError(info) {
 			console.log("Parse Error on line " + lineNumber + ": " + info);
 			errors.push({lineNumber:lineNumber, text:info});
@@ -66,7 +65,6 @@ function parseKnitout(codeText, machine) {
 		}
 		var tokens = m[1].split(/[ \t]+/);
 		var comment = m[2];
-		var source = undefined;
 
 		//handle !source: directive in comment
 		if (comment && comment.startsWith(';!source:')) {

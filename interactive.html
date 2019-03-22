@@ -42,18 +42,57 @@ code.knitout {
 	height:80vh;
 }
 
-#editor-text {
-	height:90vh;
-	width:50vw;
+
+.knitoutBox {
+	background:yellow;
+}
+
+body {
+	display:flex;
+	flex-flow: column;
+	width:100vw;
+	height:100vh;
+	margin:0;
+	padding:0;
+	overflow:hidden;
+}
+
+#top {
+	width:100vw;
+	height:1em;
+}
+#bottom {
+	width:100vw;
+	height:100%;
+	display:flex;
+	flex-flow: row;
 }
 #visualizer {
+	width:50vw;
+}
+#show {
+	width:100%;
+	height:100%;
+}
+#editor {
+	flex-grow:1;
+	flex-basis:20vw;
+	display:flex;
+	flex-flow: column;
+}
+#editor-text {
+	width:100%;
+	flex-grow:1;
 }
 
 </style>
 <body>
+<div id="top">
 <input id="file" type="file" />
 <label id="fileLabel" for="file"><span>Choose a knitout file</span> or drag one into the window to visualize it.</label>
+</div>
 
+<div id="bottom">
 <div id="editor">
 <div id="editor-text">
 /*
@@ -69,28 +108,45 @@ check "link line to boxes" next to "compile"
 HAVE FUN!
 */
 
-var knitout = require('../knitout-frontend-js/knitout');
+const knitout = require('../knitout-frontend-js/knitout');
 k = new knitout.Writer({carriers:['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']});
 
+let min = 1;
+let max = 11;
+
 k.inhook('3');
-for(var i=10; i>0; i--){
-	if(i%2 == 0){
-		k.tuck("-", "f", i,'3');
+for (let i = max; i >= min; --i){
+	if ((max - i) % 2 === 0){
+		k.tuck('-', 'f', i, '3');
 	}
 }
-for(var i=1; i&lt;=10; i++){
-	if(i%2 != 0){
-		k.tuck("+", "b", i, '3');
+for (let i = min; i &lt;= max; ++i){
+	if ((max - i) % 2 !== 0){
+		k.tuck('+', 'b', i, '3');
+	}
+}
+for (let r = 0; r < 10; ++r) {
+	for (let i = max; i >= min; --i){
+		k.knit('-', ((max - i) % 2 === 0 ? 'f' : 'b'), i, '3');
+	}
+	for (let i = min; i &lt;= max; ++i){
+		k.knit('+', ((max - i) % 2 === 0 ? 'f' : 'b'), i, '3');
 	}
 }
 k.outhook('3');
+for (let i = max; i >= min; --i){
+	k.drop(((max - i) % 2 === 0 ? 'f' : 'b'), i);
+}
 k.write('wristband.k');
 </div>
+<div id="editor-buttons">
 <button id="compile">SHOW</button>
+</div>
 </div>
 
 <div id="visualizer">
 <canvas class="ShowKnitout" id="show"></canvas>
+</div>
 </div>
 
 <div id="dropTarget"></div>
@@ -121,34 +177,27 @@ let oldHoveredRow = NaN;
 
 show.showKnitout.highlightLine = function(source) {
 	if (oldHoveredRow === oldHoveredRow) {
-		editor.session.removeGutterDecoration(oldHoveredRow, "knitoutBox");
+		editor.session.removeGutterDecoration(oldHoveredRow-1, "knitoutBox");
 	}
 	let line = parseInt(source);
 	oldHoveredRow = line;
 	if (line === line) {
-		editor.session.addGutterDecoration(oldHoveredRow, "knitoutBox");
+		editor.session.addGutterDecoration(oldHoveredRow-1, "knitoutBox");
 	} else {
 		console.log("Unhighlight");
 	}
 };
 
-let compile = document.getElementById("compile");
-compile.addEventListener('click', function(){
-	var code = editor.getValue();
-	var knitout = evalJS(code);
+function updateVisualizer() {
+	let code = editor.getValue();
+	let knitout = evalJS(code);
 	console.log(knitout);
 	show.showKnitout.parse(knitout);
+}
+updateVisualizer();
 
-	/*
-	console.log(knitout)
-	var machine = new RecordMachine();
-	parseKnitout(knitout, machine);
-	boxes = initializeBoxes(machine,true,true,true,true,true);
-	console.log(boxes);
-	drawBoxes(boxes);
-	console.log('done drawing');
-	*/
-});
+let compile = document.getElementById("compile");
+compile.addEventListener('click', updateVisualizer);
 
 function readFile(file) {
 	console.log("Attempting to read file: '" + file.name + "'");

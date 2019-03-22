@@ -1285,19 +1285,24 @@ outhook A B C
 var code = document.getElementById('code1');
 var show = document.getElementById('show1');
 
+show.showKnitout.parse(code.innerText);
+
 function readFile(file) {
 	console.log("Attempting to read file: '" + file.name + "'");
 
 	var oldSize = 0;
 	var oldCheck = 0;
+	var oldText = null;
 
 	function pollFile() {
 		//generate new data:
 		var reader = new FileReader();
 		reader.onload = function(){
-			if (reader.result != code.innerText) {
-				code.innerText = reader.result;
-				show.showKnitout.reparse();
+			if (reader.result !== oldText) {
+				oldText = reader.result;
+				console.log("parsing...");
+				show.showKnitout.parse(reader.result);
+				console.log("done parsing.");
 			}
 
 			//poll again:
