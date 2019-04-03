@@ -550,10 +550,10 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 	//ports used in case of crossing:
 	let crossFrom = '';
 	let crossTo = '';
-	if (needleBed(n) === 'f') {
+	if (needleBed(n)[0] === 'f') {
 		targetIndex = yarnBeforeIndex(d, n);
 		targetSide = d;
-	} else { console.assert(needleBed(n) === 'b', "only support 'f' and 'b' beds at the moment.");
+	} else { console.assert(needleBed(n)[0] === 'b', "must be on 'f*' or 'b*' bed.");
 		//pick the index across from the needle's before at the current racking:
 		targetIndex = yarnBeforeIndex(d, 'f' + (needleIndex(n)/2 + Math.floor(this.racking)));
 		if (this.racking === Math.floor(this.racking)) {
@@ -585,7 +585,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 	cs.forEach(function(cn){
 		let c = this.getCarrier(cn);
 		if (c.after) {
-			console.assert(needleBed(c.after.n) === 'f', "Carreirs must always be parked on the front.");
+			console.assert(needleBed(c.after.n) === 'f', "Carriers must always be parked on the front.");
 			let index = yarnAfterIndex(c.after.d, c.after.n);
 			minIndex = Math.min(minIndex, index);
 			maxIndex = Math.max(maxIndex, index);

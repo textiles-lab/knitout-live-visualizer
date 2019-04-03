@@ -22,7 +22,7 @@ function ShowKnitout(canvas) {
 	this.camera = {
 		x: 0.0,
 		y: 0.0,
-		portion: 1.0 //view 'portion' portion of item along shortest axis
+		radius: 10.0 //in terms of shortest axis
 	};
 
 	//this.showTiles(); //DEBUG
@@ -56,10 +56,12 @@ function ShowKnitout(canvas) {
 	canvas.addEventListener('wheel', function(evt){
 		evt.preventDefault();
 
+		me.setCurrentTransform();
+
 		let oldX = (me.mouse.x - me.currentTransform[4]) / me.currentTransform[0];
 		let oldY = (me.mouse.y - me.currentTransform[5]) / me.currentTransform[3];
 
-		me.camera.portion *= Math.pow(0.5, -evt.deltaY / 300.0);
+		me.camera.radius *= Math.pow(0.5, -evt.deltaY / 300.0);
 
 		me.setCurrentTransform();
 
@@ -68,6 +70,8 @@ function ShowKnitout(canvas) {
 
 		me.camera.x += (oldX - newX);
 		me.camera.y += (oldY - newY);
+
+		me.setCurrentTransform();
 
 		me.requestDraw();
 
@@ -129,7 +133,7 @@ ShowKnitout.prototype.setCurrentTransform = function ShowKnitout_setCurrentTrans
 	const w = Math.round(rect.width * window.devicePixelRatio);
 	const h = Math.round(rect.height * window.devicePixelRatio);
 
-	const scale = Math.min(w / (this.camera.portion * (this.max.x-this.min.x)), h / (this.camera.portion * (this.max.y-this.min.y)));
+	const scale = Math.min(w,h) / (2.0 * this.camera.radius);
 
 	this.currentTransform = [scale,0, 0,-scale, 0.5*w-scale*this.camera.x, 0.5*h+scale*this.camera.y];
 };
@@ -153,6 +157,10 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	//scale to show whole grid:
 	this.setCurrentTransform();
 	ctx.setTransform(...this.currentTransform);
+
+	//DEBUG: show min/max rectangle [used for camera handling]
+	//ctx.fillStyle = "#f0f";
+	//ctx.fillRect(this.min.x,this.min.y, this.max.x-this.min.x,this.max.y-this.min.y);
 
 	TileSet.draw(ctx, this.drawing, {
 		frontOfs:{x:0.0, y:0.0},
@@ -298,6 +306,9 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 
 ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 
+	let oldMin = this.min;
+	let oldMax = this.max;
+
 	const machine = new CellMachine();
 	try {
 		parseKnitout(codeText, machine);
@@ -318,8 +329,38 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 	}
 	if (minIndex > maxIndex) return;
 
+
 	this.min = TileSet.tileLowerLeft(minIndex, 0);
 	this.max = TileSet.tileLowerLeft(maxIndex + 1, machine.topRow + 1);
+
+	const Margin = 0.5 * TileSet.TileHeight;
+
+	//update camera based on old/new min/max:
+	if (oldMin.x >= oldMax.x || oldMin.y >= oldMax.y) {
+		//old min/max invalid, frame whole piece:
+		this.camera.x = 0.5 * (this.max.x + this.min.x);
+		this.camera.y = 0.5 * (this.max.y + this.min.y);
+		this.camera.radius = 0.5 * Math.max(this.max.x - this.min.x + 2.0 * Margin, this.max.y - this.min.y + 2.0 * Margin);
+	} else {
+		/*
+		//if the piece got larger, zoom out:
+		let stretch = Math.max(
+			(this.max.x - this.min.x) / (oldMax.x - oldMin.x),
+			(this.max.y - this.min.y) / (oldMax.y - oldMin.y)
+		);
+		if (stretch > 1.0) {
+			this.camera.radius *= stretch;
+		}
+		*/
+		//if the piece got smaller so that it can't be seen any longer, zoom out:
+		this.camera.radius = Math.max(
+			this.camera.radius,
+			this.camera.x-this.max.x + Margin,
+			this.min.x-this.camera.x + Margin,
+			this.camera.y-this.max.y + Margin,
+			this.min.y-this.camera.y + Margin
+		);
+	}
 
 	//fill grids from machine's columns:
 	this.columns = maxIndex - minIndex + 1;
@@ -386,6 +427,8 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 		TileSet.addCross(this.drawing, cross);
 		//this.crosses.push(TileSet.makeCross(cross.type, this.columnX[cross.i-minIndex], this.columnX[cross.i2-minIndex], TileSet.TileHeight * cross.y, cross.yarns, cross.colors));
 	}, this);
+
+
 
 };
 
