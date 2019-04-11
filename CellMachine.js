@@ -387,6 +387,7 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 
 	if (typeof(cross) !== 'undefined') {
 		let bi, fi;
+        
 		let bp = '';
 		let fp = '';
 		if (cross.b === 'b' && cross.b2 === 'f') {
@@ -406,7 +407,7 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 			'o+':0.75, 'x+':0.75
 		};
 		console.assert(bp in px && fp in px, "port names should exist");
-		let bx = bi + px[bp];
+        let bx = bi + px[bp];
 		let fx = fi + px[fp];
 		cross.bx = bx;
 		cross.fx = fx;
@@ -883,9 +884,11 @@ CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells
 			turn.addSeg(cn, outSide, '^'+outSide);
 		}, this);
 		this.sortPort(turn.ports['^'+outSide]);
-		cells.push({i:yarnAfterIndex(d, n), cell:turn});
+        cells.push({i:yarnAfterIndex(d, n), cell:turn});
 	}
-
+//    if (typeof(cross) === 'undefined'){
+//        this.addCells(needleBed(n), cells, cross);
+//    }
 	this.addCells(needleBed(n), cells, cross);
 
 	let frontD;

@@ -68,8 +68,8 @@ function yarnStyle(y, colors) {
 VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 	let frontOfs = options.frontOfs || {x:0.0, y:0.0};
 	let backOfs = options.backOfs || {x:0.0, y:0.0};
-	let frontSlidersOfs = options.frontSlidersOfs || {x:0.75 * frontOfs.x + 0.25 * backOfs.y, y: 0.75 * frontOfs.x + 0.25 * backOfs.y};
-	let backSlidersOfs = options.backSlidersOfs || {x:0.25 * frontOfs.x + 0.75 * backOfs.y, y: 0.25 * frontOfs.x + 0.75 * backOfs.y};
+	let frontSlidersOfs = options.frontSlidersOfs || {x:0.75 * frontOfs.x + 0.25 * backOfs.x, y: 0.75 * frontOfs.y + 0.25 * backOfs.y};
+	let backSlidersOfs = options.backSlidersOfs || {x:0.25 * frontOfs.x + 0.75 * backOfs.x, y: 0.25 * frontOfs.y + 0.75 * backOfs.y};
 	let frontTintRGBA = options.frontTintRGBA || [1.0, 1.0, 1.0, 0.0];
 	let middleTintRGBA = options.middleTintRGBA || [1.0, 1.0, 1.0, 0.0];
 	let backTintRGBA = options.backTintRGBA || [1.0, 1.0, 1.0, 0.0];
@@ -554,7 +554,7 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 		//TO CHECK: across === loops, right?
 		if (across.length >= 1) {
 			let a0 = across[0];
-			drawing.addLine(layer, styles, a0, [ 4.5, 0.0, 4.5, 5.5 ], ll);
+            drawing.addLine(layer, styles, a0, [ 4.5, 0.0, 4.5, 5.5 ], ll);
 			drawing.addLine(layer, styles, a0, [ 8.5, 0.0, 8.5, 5.5 ], ll);
 
 			if (across.length >= 2) {

@@ -326,12 +326,18 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 	this.rows = machine.topRow + 1;
 	this.grids.b = new Array(this.columns * this.rows);
 	this.grids.f = new Array(this.columns * this.rows);
+    this.grids.bs = new Array(this.columns * this.rows);
+	this.grids.fs = new Array(this.columns * this.rows);
 
 	for (let i = minIndex; i <= maxIndex; ++i) {
 		let bColumn = machine.beds.b.getColumn(i);
 		let fColumn = machine.beds.f.getColumn(i);
+        let bsColumn = machine.beds.bs.getColumn(i);
+		let fsColumn = machine.beds.fs.getColumn(i);
 		let bi = 0;
 		let fi = 0;
+        let bsi = 0;
+		let fsi = 0;
 		for (let y = 0; y < this.rows; ++y) {
 			let b = null;
 			if (bi < bColumn.length && bColumn[bi].y === y) {
@@ -342,6 +348,16 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 			if (fi < fColumn.length && fColumn[fi].y === y) {
 				f = fColumn[fi];
 				++fi;
+			}
+            let bs = null;
+			if (bsi < bsColumn.length && bsColumn[bsi].y === y) {
+				bs = bsColumn[bsi];
+				++bsi;
+			}
+			let fs = null;
+			if (fsi < fsColumn.length && fsColumn[fsi].y === y) {
+				fs = fsColumn[fsi];
+				++fsi;
 			}
 
 			if (i % 2 === 0) {
@@ -362,6 +378,22 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 					TileSet.addLoopTile(this.drawing, b.styles,
 						{i:i, y:y, type:b.type, bed:'b', loops:loops, yarns:yarns, across:incoming});
 				}
+                if (fs) {
+					const loops = fs.ports['v'];
+					const yarns = fs.ports['+'];
+					const incoming = fs.ports['x'];
+					this.grids.fs[y * this.columns + (i - minIndex)] = fs;
+					TileSet.addLoopTile(this.drawing, fs.styles,
+						{i:i, y:y, type:fs.type, bed:'fs', loops:loops, yarns:yarns, across:incoming});
+				}
+				if (bs) {
+					const loops = bs.ports['v'];
+					const yarns = bs.ports['+'];
+					const incoming = bs.ports['o'];
+					this.grids.bs[y * this.columns + (i - minIndex)] = bs;
+					TileSet.addLoopTile(this.drawing, bs.styles,
+						{i:i, y:y, type:bs.type, bed:'bs', loops:loops, yarns:yarns, across:incoming});
+				}
 			} else {
 				//yarns:
 				if (f) {
@@ -371,6 +403,14 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 				if (b) {
 					this.grids.b[y * this.columns + (i - minIndex)] = b;
 					TileSet.addYarnTile(this.drawing, b.styles, {i:i, y:y, bed:'b', ports:b.ports, segs:b.segs}, machine.carriers);
+				}
+                if (fs) {
+					this.grids.fs[y * this.columns + (i - minIndex)] = fs;
+					TileSet.addYarnTile(this.drawing, fs.styles, {i:i, y:y, bed:'fs', ports:fs.ports, segs:fs.segs}, machine.carriers);
+				}
+				if (bs) {
+					this.grids.bs[y * this.columns + (i - minIndex)] = bs;
+					TileSet.addYarnTile(this.drawing, bs.styles, {i:i, y:y, bed:'bs', ports:bs.ports, segs:bs.segs}, machine.carriers);
 				}
 			}
 		}
