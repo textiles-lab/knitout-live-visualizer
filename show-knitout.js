@@ -86,14 +86,14 @@ function ShowKnitout(canvas) {
 			me.requestDraw();
 			return false;
 		}
-		if (evt.code === "Space") {
+		/*if (evt.code === "Space") {
 			evt.preventDefault();
 			if (me.hovered) {
 				console.log(me.hovered.tile.src);
 			}
 			me.requestDraw();
 			return false;
-		}
+		}*/
 	});
 
 	canvas.addEventListener('keyup', function(evt){
@@ -108,8 +108,8 @@ function ShowKnitout(canvas) {
 	canvas.addEventListener('mousedown', function(evt){
 		evt.preventDefault();
 		if (me.hovered && me.hovered.tile.source) {
-			if (me.clickLine) {
-				me.clickLine(me.hovered.tile.source);
+			if (me.onClickSource) {
+				me.onClickSource(me.hovered.tile.source);
 			}
 		}
 		return false;
@@ -126,6 +126,12 @@ ShowKnitout.prototype.clearDrawing = function ShowKnitout_clearDrawing() {
 	this.max = { x:0, y:0 };
 
 	this.drawing = TileSet.makeDrawing();
+	this.highlightFn = function(){ return false; }
+};
+
+ShowKnitout.prototype.setHighlightFn = function ShowKnitout_setHighlightFn(highlightFn) {
+	this.highlightFn = highlightFn;
+	this.requestDraw();
 };
 
 ShowKnitout.prototype.setCurrentTransform = function ShowKnitout_setCurrentTransform() {
@@ -169,15 +175,27 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		middleTintRGBA:[0.53, 0.53, 0.53, 0.3],
 		frontTintRGBA:[1.0, 1.0, 1.0, 0.0]
 	});
-	
-	if (this.hovered) {
-		let x = this.columnX[this.hovered.col];
-		let w = (this.hovered.col+1 < this.columnX.length ? this.columnX[this.hovered.col+1] : this.width) - x;
-		ctx.globalAlpha = 0.1;
-		ctx.fillStyle = '#fff';
-		ctx.fillRect(x,0, w,this.height);
-		ctx.globalAlpha = 1.0;
+
+	//draw highlights:
+	for (let row = 0; row < this.rows; ++row) {
+		for (let col = 0; col < this.columns; ++col) {
+
+			const x = this.columnX[col];
+			const width = (col + 1 < this.columnX.length ? this.columnX[col+1] : this.width) - x;
+			const y = TileSet.TileHeight * row;
+
+			let f = this.grids.f[row * this.columns + col];
+			if (f && f.source && this.highlightFn(f.source)) {
+				ctx.globalAlpha = 0.5;
+				ctx.fillStyle = '#fff';
+				ctx.fillRect(x,y, width,TileSet.TileHeight);
+				ctx.globalAlpha = 1.0;
+			}
+
+			//TODO: not just the front bed.
+		}
 	}
+
 	
 	//update selection:
 	let mx = (this.mouse.x - this.currentTransform[4]) / this.currentTransform[0];
@@ -210,6 +228,22 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 
 		}
 	}
+
+	if (this.hovered) {
+		let x = this.columnX[this.hovered.col];
+		let w = (this.hovered.col+1 < this.columnX.length ? this.columnX[this.hovered.col+1] : this.width) - x;
+		ctx.globalAlpha = 0.1;
+		ctx.fillStyle = '#fff';
+		ctx.fillRect(x,0, w,this.height);
+		ctx.globalAlpha = 1.0;
+	}
+
+	if (oldHovered !== this.hovered && this.hovered && this.hovered.tile.source) {
+		if (this.onHoverSource) {
+			this.onHoverSource(this.hovered.tile.source);
+		}
+	}
+
 
 	//draw selection:
 	if (this.hovered) {

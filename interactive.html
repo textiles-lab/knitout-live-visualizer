@@ -157,9 +157,25 @@ show.showKnitout.clickLine = function(source) {
 	editor.gotoLine(line);
 };
 
+editor.selection.addEventListener('changeCursor',function(){
+	let cursor = editor.selection.getCursor();
+	let range = editor.selection.getRange();
+	const start = range.start.row + 1;
+	const end = range.end.row + 1;
+	show.showKnitout.setHighlightFn(function(source){
+		let line = parseInt(source);
+		if (line >= start && line <= end) {
+			return true;
+		} else {
+			return false;
+		}
+	});
+});
+
+
 let oldHoveredRow = NaN;
 
-show.showKnitout.highlightLine = function(source) {
+show.showKnitout.onHoverSource = function(source) {
 	if (oldHoveredRow === oldHoveredRow) {
 		editor.session.removeGutterDecoration(oldHoveredRow-1, "knitoutBox");
 	}
