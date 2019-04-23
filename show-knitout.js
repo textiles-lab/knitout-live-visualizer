@@ -168,33 +168,44 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	//ctx.fillStyle = "#f0f";
 	//ctx.fillRect(this.min.x,this.min.y, this.max.x-this.min.x,this.max.y-this.min.y);
 
+	const gridOfs = {
+		f:{x:0.0, y:0.0},
+		b:{x:-0.15 * TileSet.LoopWidth, y:0.2 * TileSet.TileHeight},
+	};
+	gridOfs.fs = {x: 0.75 * gridOfs.f.x + 0.25 * gridOfs.b.x, y: 0.75 * gridOfs.f.y + 0.25 * gridOfs.b.y};
+	gridOfs.bs = {x: 0.25 * gridOfs.f.x + 0.75 * gridOfs.b.x, y: 0.25 * gridOfs.f.y + 0.75 * gridOfs.b.y};
+	
 	TileSet.draw(ctx, this.drawing, {
-		frontOfs:{x:0.0, y:0.0},
-		backOfs:{x:-0.15 * TileSet.LoopWidth, y:0.2 * TileSet.TileHeight},
+		frontOfs:gridOfs.f,
+		frontSlidersOfs:gridOfs.fs,
+		backOfs:gridOfs.b,
+		backSlidersOfs:gridOfs.bs,
 		backTintRGBA:[0.53, 0.53, 0.53, 0.6],
 		middleTintRGBA:[0.53, 0.53, 0.53, 0.3],
 		frontTintRGBA:[1.0, 1.0, 1.0, 0.0]
 	});
 
 	//draw highlights:
-	for (let row = 0; row < this.rows; ++row) {
-		for (let col = 0; col < this.columns; ++col) {
+	["b","bs","fs","f"].forEach(function(gridName) {
+		let grid = this.grids[gridName];
+		let ofs = gridOfs[gridName];
+		for (let row = 0; row < this.rows; ++row) {
+			for (let col = 0; col < this.columns; ++col) {
 
-			const x = this.columnX[col];
-			const width = (col + 1 < this.columnX.length ? this.columnX[col+1] : this.width) - x;
-			const y = TileSet.TileHeight * row;
+				const x = this.columnX[col];
+				const width = (col + 1 < this.columnX.length ? this.columnX[col+1] : this.width) - x;
+				const y = TileSet.TileHeight * row;
 
-			let f = this.grids.f[row * this.columns + col];
-			if (f && f.source && this.highlightFn(f.source)) {
-				ctx.globalAlpha = 0.5;
-				ctx.fillStyle = '#fff';
-				ctx.fillRect(x,y, width,TileSet.TileHeight);
-				ctx.globalAlpha = 1.0;
+				let tile = grid[row * this.columns + col];
+				if (tile && tile.source && this.highlightFn(tile.source)) {
+					ctx.globalAlpha = 0.5;
+					ctx.fillStyle = '#fff';
+					ctx.fillRect(ofs.x+x,ofs.y+y, width,TileSet.TileHeight);
+					ctx.globalAlpha = 1.0;
+				}
 			}
-
-			//TODO: not just the front bed.
 		}
-	}
+	}, this);
 
 	
 	//update selection:

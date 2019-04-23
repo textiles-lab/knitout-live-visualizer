@@ -123,6 +123,15 @@ k.xfer("bs1","f1");
 k.xfer("b2","fs2");
 k.xfer("bs3","f3");
 
+k.xfer("fs0", "b0");
+k.xfer("f1", "b1");
+k.xfer("fs2", "b2");
+k.xfer("f3", "b3");
+
+for(var i=0;i<4;i++){
+    k.knit("+","b"+i,carrier1);
+}
+
 k.outhook(carrier1);
 
 k.write('wristband.k');

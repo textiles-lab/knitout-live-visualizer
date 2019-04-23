@@ -1171,8 +1171,8 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 	let xferTo = new LoopCell((cs.length ? 'S' : 'X'));
 	cells.push({bed:needleBed(n2), i:needleIndex(n2), cell:xferTo});
 
-	let fromPort = (needleBed(n) === 'f' ? 'x' : 'o');
-	let toPort = (needleBed(n) === 'f' ? 'o' : 'x');
+	let fromPort = (needleBed(n)[0] === 'f' ? 'x' : 'o');
+	let toPort = (needleBed(n)[0] === 'f' ? 'o' : 'x');
 
 	const cross = {
 		yarns:[],
@@ -1193,7 +1193,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 		}
 	}
 
-	if (needleBed(n2) === 'b') addToLoops.call(this);
+	if (needleBed(n2)[0] === 'b') addToLoops.call(this);
 
 	//add loop connections from the column:
 	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
@@ -1207,7 +1207,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 		});
 	}
 
-	if (needleBed(n2) === 'f') addToLoops.call(this);
+	if (needleBed(n2)[0] === 'f') addToLoops.call(this);
 
 	//Do clean-up and marking:
 	this.makeAfter(d, n, cs, cells, cross);
