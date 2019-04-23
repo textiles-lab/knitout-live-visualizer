@@ -390,11 +390,11 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
         
 		let bp = '';
 		let fp = '';
-		if (cross.b === 'b' && cross.b2 === 'f') {
+		if (cross.b[0] === 'b' && cross.b2[0] === 'f') {
 			bi = cross.i; fi = cross.i2;
 			if ('port' in cross) bp = cross.port;
 			if ('port2' in cross) fp = cross.port2;
-		} else { console.assert(cross.b === 'f' && cross.b2 === 'b', "must cross f <-> b");
+		} else { console.assert(cross.b[0] === 'f' && cross.b2[0] === 'b', "must cross f <-> b");
 			fi = cross.i; bi = cross.i2;
 			if ('port' in cross) fp = cross.port;
 			if ('port2' in cross) bp = cross.port2;
@@ -897,10 +897,10 @@ CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells
 	let crossFrom = '';
 
 	//mark carriers:
-	if (needleBed(n) === 'f') {
+	if (needleBed(n)[0] === 'f') {
 		frontD = d;
 		frontN = n;
-	} else { console.assert(needleBed(n) === 'b', "Only f/b at the moment");
+	} else { console.assert(needleBed(n)[0] === 'b', "Only f/b at the moment");
 		frontD = d;
 		if (this.racking === Math.floor(this.racking)) {
 			//aligned racking:

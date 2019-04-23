@@ -149,9 +149,9 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 		ctx.beginPath();
 		g.lines.forEach(function(lines,z) {
 			lines.forEach(function(line){
-				console.assert(line.length === 4, "bridges should be [fx,fy,bx,by]");
-				ctx.moveTo(line[0] + frontOfs.x, line[1] + frontOfs.y);
-				ctx.lineTo(line[2] + backOfs.x, line[3] + backOfs.y);
+				console.assert(line.length === 6, "bridges should be [fx,fy,fs,bx,by,bs]");
+				ctx.moveTo(line[0] + (line[2] ? frontSlidersOfs.x : frontOfs.x), line[1] + (line[2] ? frontSlidersOfs.y : frontOfs.y));
+				ctx.lineTo(line[3] + (line[5] ? backSlidersOfs.x : backOfs.x), line[4] + (line[5] ? backSlidersOfs.y : backOfs.y));
 			});
 		});
 		ctx.stroke();
@@ -218,12 +218,17 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 		let pf, pb;
 
 		let front, back;
-		if (cross.b === 'f') {
+		let fs, bs;
+		if (cross.b[0] === 'f') {
+			fs = (cross.b === 'fs');
+			bs = (cross.b2 === 'bs');
 			front = tileLowerLeft(cross.i, cross.y);
 			pf = ports[cross.port];
 			back = tileLowerLeft(cross.i2, cross.y);
 			pb = ports[cross.port2];
-		} else {
+		} else { console.assert(cross.b[0] === 'b', "yarn crosses should be f* <-> b*");
+			bs = (cross.b === 'bs');
+			fs = (cross.b2 === 'fs');
 			front = tileLowerLeft(cross.i2, cross.y);
 			pf = ports[cross.port2];
 			back = tileLowerLeft(cross.i, cross.y);
@@ -232,11 +237,11 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 
 		if (cross.yarns.length >= 1) {
 			let l0 = cross.yarns[0];
-			drawing.addLine(drawing.middle, cross.styles, l0, [front.x+pf.x, front.y+pf.y0, back.x+pb.x, back.y+pb.y0]);
+			drawing.addLine(drawing.middle, cross.styles, l0, [front.x+pf.x, front.y+pf.y0, fs, back.x+pb.x, back.y+pb.y0, bs]);
 		}
 		if (cross.yarns.length >= 2) {
 			let l1 = cross.yarns.slice(1).join(' ');
-			drawing.addLine(drawing.middle, cross.styles, l1, [front.x+pf.x, front.y+pf.y1, back.x+pb.x, back.y+pb.y1]);
+			drawing.addLine(drawing.middle, cross.styles, l1, [front.x+pf.x, front.y+pf.y1, fs, back.x+pb.x, back.y+pb.y1, bs]);
 		}
 		return;
 	}
@@ -255,12 +260,17 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 	}
 
 	let front, back;
-	if (cross.b === 'f') {
+	let fs, bs;
+	if (cross.b[0] === 'f') {
+		fs = (cross.b === 'fs');
+		bs = (cross.b2 === 'bs');
 		front = tileLowerLeft(cross.i, cross.y);
 		front.y += y1;
 		back = tileLowerLeft(cross.i2, cross.y);
 		back.y += y2;
-	} else {
+	} else { console.assert(cross.b[0] === 'b', "loop crosses should be f* <-> b*");
+		bs = (cross.b === 'bs');
+		fs = (cross.b2 === 'fs');
 		front = tileLowerLeft(cross.i2, cross.y);
 		front.y += y2;
 		back = tileLowerLeft(cross.i, cross.y);
@@ -269,13 +279,13 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 
 	if (cross.yarns.length >= 1) {
 		let l0 = cross.yarns[0];
-		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+l, front.y, back.x+l, back.y ]);
-		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+r, front.y, back.x+r, back.y ]);
+		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+l, front.y, fs, back.x+l, back.y, bs ]);
+		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+r, front.y, fs, back.x+r, back.y, bs ]);
 	}
 	if (cross.yarns.length >= 2) {
 		let l1 = cross.yarns.slice(1).join(' ');
-		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+l+1.0, front.y, back.x+l+1.0, back.y ]);
-		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+r-1.0, front.y, back.x+r-1.0, back.y ]);
+		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+l+1.0, front.y, fs, back.x+l+1.0, back.y, bs ]);
+		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+r-1.0, front.y, fs, back.x+r-1.0, back.y, bs ]);
 	}
 };
 
