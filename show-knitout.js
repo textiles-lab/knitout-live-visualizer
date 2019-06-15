@@ -360,6 +360,17 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
 	} catch (e) {
 		console.log("parse error:",e);
 	}
+       
+        let code = document.getElementById('code1');
+        if (code) {
+            code.innerHTML = "";
+            let lines = codeText.split("\n");
+            let annotatedLines = ""
+            for (let i = 0; i < lines.length; i++) {
+                annotatedLines += "<span class='lineNumber'>" + i + "</span>" + lines[i] + "\n";
+            }
+            code.innerHTML = annotatedLines;
+        }
 
 	this.requestDraw();
 
