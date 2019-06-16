@@ -197,6 +197,8 @@ show.showKnitout.onHoverSource = function(source) {
 };
 
 function updateVisualizer() {
+	updateKnitoutMode();
+
 	let code = editor.getValue();
 	let knitout;
 	if (isKnitout()) {
@@ -228,7 +230,6 @@ function readFile(file) {
 	reader.onload = function(){
 		console.log("read " + file.name);
 		editor.setValue(reader.result, -1);
-		updateKnitoutMode();
 		updateVisualizer();
 	};
 	console.log("reading " + file.name);
