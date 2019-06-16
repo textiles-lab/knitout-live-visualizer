@@ -38,12 +38,6 @@ code.knitout {
 	text-decoration:underline;
 }
 
-#show1 {
-	width:100vh;
-	height:80vh;
-        float: left;
-}
-
 .knitoutBox {
 	background:yellow;
 }
@@ -60,22 +54,21 @@ body {
 
 #top {
 	width:100vw;
-	height:1em;
+	height:2em;
 }
 #bottom {
 	width:100vw;
-	height:100%;
+	height:calc(100vh - 2em);
 	display:flex;
 	flex-flow: row;
 }
 #visualizer {
 	width:50vw;
-        height: 1000vh;
-
+	height:100%;
 }
 #show {
-	width:  100%;
-        height: 80vh;
+	width: 100%;
+	height: 80vh;
 }
 #editor {
 	flex-grow:1;
@@ -92,28 +85,29 @@ body {
 <body>
 <div id="top">
 <input id="file" type="file" />
-<label id="fileLabel" for="file"><span>Choose a knitout file</span> or drag one into the window to visualize it.</label>
+<label id="fileLabel" for="file"><span>Load a knitout or js file</span></label>
+<button id="compile">Run/Show</button>
 </div>
 
 <div id="bottom">
 <div id="editor">
 <div id="editor-text">
 //import the knitout writer code and instantiate it as an object
-var knitout = require ('../knitout-frontend-js/knitout');
+const knitout = require('knitout');
 k = new knitout.Writer({carriers:['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']});
 
 // add some headers relevant to this job
 k.addHeader('Machine','SWGXYZ');
 k.addHeader('Gauge','15');
-var carrier1 = '7';
+const Carrier = '7';
 
-k.inhook(carrier1);
+k.inhook(Carrier);
 for(var i=0;i&lt;4;i++){
-    k.tuck("+","f"+i,carrier1);
+    k.tuck("+","f"+i,Carrier);
 }
 
 for(var i=3;i>=0;i--){
-    k.knit("-","f"+i,carrier1);
+    k.knit("-","f"+i,Carrier);
 }
 
 k.xfer("f0","b0");
@@ -132,16 +126,13 @@ k.xfer("fs2", "b2");
 k.xfer("f3", "b3");
 
 for(var i=0;i<4;i++){
-    k.knit("+","b"+i,carrier1);
+    k.knit("+","b"+i,Carrier);
 }
 
-k.outhook(carrier1);
+k.outhook(Carrier);
 
 k.write('wristband.k');
 
-</div>
-<div id="editor-buttons">
-<button id="compile">SHOW</button>
 </div>
 </div>
 
@@ -207,7 +198,20 @@ show.showKnitout.onHoverSource = function(source) {
 
 function updateVisualizer() {
 	let code = editor.getValue();
-	let knitout = evalJS(code);
+	let knitout;
+	if (isKnitout()) {
+		//mark up code with line numbers:
+		knitout = '';
+		code.split('\n').forEach(function(line, lineNumber){
+			knitout += line;
+			if (line.indexOf(';') === -1) {
+				knitout += ';!source:' + (lineNumber+1);
+			}
+			knitout += '\n';
+		});
+	} else {
+		knitout = evalJS(code);
+	}
 	//console.log(knitout);
 	show.showKnitout.parse(knitout);
 }
@@ -219,33 +223,33 @@ compile.addEventListener('click', updateVisualizer);
 function readFile(file) {
 	console.log("Attempting to read file: '" + file.name + "'");
 
-	var oldSize = 0;
-	var oldCheck = 0;
-
-	function pollFile() {
-		//generate new data:
-		var reader = new FileReader();
-		reader.onload = function(){
-			if (reader.result != code.innerText) {
-				code.innerText = reader.result;
-				show.showKnitout.reparse();
-			}
-
-			//poll again:
-			readFile.pollTimeout = window.setTimeout(pollFile, 5000);
-		};
-		console.log("polling " + file.name);
-		reader.readAsText(file);
-	}
-
-	if ('pollTimeout' in readFile) {
-		window.clearTimeout(readFile.pollTimeout);
-		delete readFile.pollTimeout;
-	}
-	pollFile();
-
+	//generate new data:
+	var reader = new FileReader();
+	reader.onload = function(){
+		console.log("read " + file.name);
+		editor.setValue(reader.result, -1);
+		updateKnitoutMode();
+		updateVisualizer();
+	};
+	console.log("reading " + file.name);
+	reader.readAsText(file);
 }
 
+function isKnitout() {
+	return /^;!knitout-\d+/.test(editor.getValue());
+}
+
+function updateKnitoutMode() {
+	if (isKnitout()) {
+		//knitout!
+		editor.getSession().setMode("ace/mode/plain_text");
+	} else {
+		//javascript!
+		editor.getSession().setMode("ace/mode/javascript");
+	}
+}
+
+/*
 var dropTarget = document.getElementById("dropTarget");
 //dragging into the window also loads files:
 dropTarget.addEventListener('dragover', function(evt){
@@ -275,6 +279,7 @@ document.addEventListener('dragover', function(evt){
 	evt.preventDefault();
 	return false;
 });
+*/
 
 var file = document.getElementById("file");
 file.addEventListener('change', function(evt){
