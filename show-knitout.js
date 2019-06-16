@@ -174,7 +174,7 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 	};
 	gridOfs.fs = {x: 0.75 * gridOfs.f.x + 0.25 * gridOfs.b.x, y: 0.75 * gridOfs.f.y + 0.25 * gridOfs.b.y};
 	gridOfs.bs = {x: 0.25 * gridOfs.f.x + 0.75 * gridOfs.b.x, y: 0.25 * gridOfs.f.y + 0.75 * gridOfs.b.y};
-	
+
 	TileSet.draw(ctx, this.drawing, {
 		frontOfs:gridOfs.f,
 		frontSlidersOfs:gridOfs.fs,
@@ -207,7 +207,7 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		}
 	}, this);
 
-	
+
 	//update selection:
 	let mx = (this.mouse.x - this.currentTransform[4]) / this.currentTransform[0];
 	let my = (this.mouse.y - this.currentTransform[5]) / this.currentTransform[3];
@@ -349,25 +349,25 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 	}
 };
 
-ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText) {
+ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsSource=false) {
 
 	let oldMin = this.min;
 	let oldMax = this.max;
 
 	const machine = new CellMachine();
 	try {
-		parseKnitout(codeText, machine);
+		  parseKnitout(codeText, machine, useKnitoutAsSource);
 	} catch (e) {
 		console.log("parse error:",e);
 	}
-       
+
         let code = document.getElementById('code1');
         if (code) {
             code.innerHTML = "";
             let lines = codeText.split("\n");
             let annotatedLines = ""
             for (let i = 0; i < lines.length; i++) {
-                annotatedLines += "<span class='lineNumber'>" + i + "</span>" + lines[i] + "\n";
+                annotatedLines += "<span class='line' id='LineNo" + i + "'><span class='lineNumber'>" + i + "</span>" + lines[i] + "</span>\n";
             }
             code.innerHTML = annotatedLines;
         }
@@ -535,4 +535,3 @@ for (let i = 0; i < elts.length; ++i) {
 	console.assert(elt.tagName === "CANVAS", "ShowKnitouts should be canvases.");
 	window.SK = new ShowKnitout(elt);
 }
-

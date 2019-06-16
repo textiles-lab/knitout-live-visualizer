@@ -1,6 +1,6 @@
 "use strict";
 //parseKnitout will parse knitout, catch syntax errors, and dispatch to calls on 'machine', an abstract knitting machine:
-function parseKnitout(codeText, machine) {
+function parseKnitout(codeText, machine, useKnitoutAsSource=false) {
 	var errors = [];
 	var warnings = [];
 
@@ -71,7 +71,9 @@ function parseKnitout(codeText, machine) {
 			if ('source' in machine) {
 				machine.source(comment.substr(9));
 			}
-		}
+		} else if (useKnitoutAsSource){
+        machine.source(lineNumber);
+    }
 
 		//trim leading/trailing whitespace from operation token list:
 		if (tokens.length !== 0 && tokens[0] === "") tokens.shift();
