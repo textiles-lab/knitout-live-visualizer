@@ -267,7 +267,7 @@ function evalJS(codeText){
 
         this._operations.push('rack ' + rack.toString());
     };
-    
+
     //returns lineNumber of the code that generated this knitout operation
     //only applies for tuck, knit, xfer, split, and miss
     //line number,l, will be followed at the end in format: ;l
@@ -275,11 +275,24 @@ function evalJS(codeText){
     function findLineNumber(){
         let err = new Error();
         let stack = err.stack.split(/\n/);
-        //console.log(stack);
         let re = /<anonymous>:(\d+):(\d+)\)$/;
         let m = stack[3].match(re);
-        let line = parseInt(m[1]);
-        return ' ;!source:'+(line-1);
+        if (m) { /* Chrome */
+            let line = parseInt(m[1]);
+            return ' ;!source:'+(line-1);
+        } else { /* Firefox */
+            let i = 0;
+            // Find trace line which starts with OUTER
+            while (!stack[i].startsWith("OUTER"))
+                i++;
+            m = stack[i].match(/(\d+):(\d+)/);
+            if (m) {
+                let line = parseInt(m[1]);
+                return ' ;!source:'+(line-1);
+            } else {
+                return ';!source:' + (-1);
+            }
+        }
     }
     Writer.prototype.knit = function(...args) {
         let dir = shiftDirection(args);
@@ -354,7 +367,7 @@ function evalJS(codeText){
         this._operations.push('xfer ' + from.bed + from.needle.toString() + ' ' + to.bed + to.needle.toString()+line);
     };
 
-    // add comments to knitout 
+    // add comments to knitout
     Writer.prototype.comment = function( str ){
 
         let multi = str.split('\n');
@@ -377,16 +390,16 @@ function evalJS(codeText){
     Writer.prototype.write = function(filename){
         let version = ';!knitout-2';
         let content = version + '\n' +
-            this._headers.join('\n') + '\n' + 
+            this._headers.join('\n') + '\n' +
             this._operations.join('\n') + '\n';
-        knitoutContent = content; 
+        knitoutContent = content;
     };
 
     // browser-compatibility
     if(typeof(module) !== 'undefined'){
         module.exports.Writer = Writer;
     }
-    
+
     function require(path){
         if (path.match("knitout$")) {
             return {Writer:Writer};
