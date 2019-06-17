@@ -367,6 +367,11 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsS
             let lines = codeText.split("\n");
             let annotatedLines = ""
             for (let i = 0; i < lines.length; i++) {
+                // Remove source line comments
+                let sourceCommentIndex = lines[i].indexOf(";!source:");
+                if (sourceCommentIndex >= 0) {
+                    lines[i] = lines[i].substring(0, sourceCommentIndex);
+                }
                 annotatedLines += "<span class='line' id='LineNo" + i + "'><span class='lineNumber'>" + i + "</span>" + lines[i] + "</span>\n";
             }
             code.innerHTML = annotatedLines;

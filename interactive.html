@@ -33,10 +33,6 @@ code.knitout {
 #file {
 	display:none;
 }
-#fileLabel span {
-	cursor:pointer;
-	text-decoration:underline;
-}
 
 .knitoutBox {
 	background:yellow;
@@ -55,6 +51,7 @@ body {
 #top {
 	width:100vw;
 	height:2em;
+	margin: 4px;
 }
 #bottom {
 	width:100vw;
@@ -81,15 +78,77 @@ body {
 	flex-grow:1;
 }
 
+button, #fileLabel {
+	box-sizing: border-box;
+	cursor:pointer;
+	background-color: #8FCF96;
+	padding: 4px 8px;
+	margin: 0;
+	box-shadow: 0 0 2px 0 rgba(0,0,0,0.2);
+	text-decoration: none;
+	font-family: serif;
+	font-size: 16px;
+	line-height: 1;
+	border-style: solid;
+	border-width: 2px;
+	border-color: #8FCF96;
+}
+
+button:hover, #fileLabel:hover {
+	background-color: #CBF3AB;
+	border-style: solid;
+	border-width: 2px;
+	border-color: #8FCF96;
+}
+
+
+.highlight {
+	background-color: #ffeeb7;
+}
+
+pre {
+	margin: 0;
+}
+#code1 {
+	box-sizing: border-box;
+	margin: 1em;
+	margin-top: 0;
+	padding: 1em 0;
+	background-color: #f3f3f3;
+	float: right;
+	height: 80vh;
+	overflow: scroll;
+	position: relative;
+	display:flex;
+	flex-flow: column;
+}
+.lineNumber {
+	color: #888;
+	width: 2.5em;
+	display: inline-block;
+	text-align: right;
+	margin-right: 1em;
+}
+.line {
+	display: inline-block;
+	padding: 0.2em 2em 0.2em 0.5em;
+	width: 100%;
+	box-sizing: border-box;
+}
+
 </style>
 <body>
 <div id="top">
 <input id="file" type="file" />
 <label id="fileLabel" for="file"><span>Load a knitout or js file</span></label>
 <button id="compile">Run/Show</button>
+<button id="save" onclick="saveKnitout();">Save Knitout</button>
+<input type="checkbox"  name="showKnitout" id="showKnitout" onchange="toggleKnitout()">Show Knitout
 </div>
 
 <div id="bottom">
+
+
 <div id="editor">
 <div id="editor-text">
 //import the knitout writer code and instantiate it as an object
@@ -135,6 +194,11 @@ k.write('wristband.k');
 
 </div>
 </div>
+
+<pre>
+<code id="code1" style="display: none;">
+</code>
+</pre>
 
 <div id="visualizer">
 <canvas class="ShowKnitout" id="show"></canvas>
@@ -196,11 +260,11 @@ show.showKnitout.onHoverSource = function(source) {
 	}
 };
 
+ let knitout;
 function updateVisualizer() {
 	updateKnitoutMode();
 
 	let code = editor.getValue();
-	let knitout;
 	if (isKnitout()) {
 		//mark up code with line numbers:
 		knitout = '';
@@ -217,6 +281,9 @@ function updateVisualizer() {
 	//console.log(knitout);
 	show.showKnitout.parse(knitout);
 }
+
+
+
 updateVisualizer();
 
 let compile = document.getElementById("compile");
@@ -281,6 +348,43 @@ document.addEventListener('dragover', function(evt){
 	return false;
 });
 */
+
+ let code = document.getElementById("code1");
+ let knitoutCheckbox = document.getElementById("showKnitout");
+ function toggleKnitout() {
+	if (knitoutCheckbox.checked) {
+		code.style.display = 'block';
+	} else {
+		code.style.display = 'none';
+	}
+ }
+
+function saveKnitout() {
+	// Remove source line comments
+	let commentFreeKnitout = "";
+	let lines = knitout.split("\n");
+	for (let i = 0; i < lines.length; ++i) {
+	let sourceCommentIndex = lines[i].indexOf(";!source:");
+	if (sourceCommentIndex >= 0) {
+		lines[i] = lines[i].substring(0, sourceCommentIndex);
+	}
+	commentFreeKnitout += lines[i] + "\n";
+
+	}
+	fileSave(commentFreeKnitout, "knitoutFile.k");
+}
+function fileSave(sourceText, fileIdentity) {
+	var workElement = document.createElement("a");
+	if ('download' in workElement) {
+		workElement.href = "data:" + 'text/plain' + "charset=utf-8," + escape(sourceText);
+		workElement.setAttribute("download", fileIdentity);
+		document.body.appendChild(workElement);
+		var eventMouse = document.createEvent("MouseEvents");
+		eventMouse.initMouseEvent("click", true, false, window, 0, 0, 0, 0, 0, false, false, false, false, 0, null);
+		workElement.dispatchEvent(eventMouse);
+		document.body.removeChild(workElement);
+	} else throw 'File saving not supported for this browser';
+}
 
 var file = document.getElementById("file");
 file.addEventListener('change', function(evt){
