@@ -390,6 +390,7 @@ var file = document.getElementById("file");
 file.addEventListener('change', function(evt){
 	try {
 		readFile(file.files[0]);
+		file.value = "";
 	} catch (e) {
 		console.log(e);
 	}
