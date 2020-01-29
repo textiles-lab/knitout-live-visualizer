@@ -275,12 +275,24 @@ function evalJS(codeText){
     function findLineNumber(){
         let err = new Error();
         let stack = err.stack.split(/\n/);
-        let re = /<anonymous>:(\d+):(\d+)\)$/;
-        let m = stack[3].match(re);
-        if (m) { /* Chrome */
+
+		//Chrome:
+        let m = stack[3].match(/<anonymous>:(\d+):(\d+)\)$/);
+        if (m) {
             let line = parseInt(m[1]);
-            return ' ;!source:'+(line-1);
-        } else { /* Firefox */
+            return ' ;!source:'+(line-2);
+		}
+
+		//Firefox:
+        m = stack[2].match(/Function:(\d+):(\d+)$/);
+        if (m) {
+            let line = parseInt(m[1]);
+            return ' ;!source:'+(line-2);
+		}
+
+		//unknown
+		return ';!source:' + (-1);
+        /*} else { //this was marked 'Firefox' but doesn't seem to work in Firefox any more?
             let i = 0;
             // Find trace line which starts with OUTER
             while (!stack[i].startsWith("OUTER"))
@@ -292,7 +304,7 @@ function evalJS(codeText){
             } else {
                 return ';!source:' + (-1);
             }
-        }
+        }*/
     }
     Writer.prototype.knit = function(...args) {
         let dir = shiftDirection(args);
@@ -405,6 +417,34 @@ function evalJS(codeText){
             return {Writer:Writer};
         }
     }
-    var content = eval("(function OUTER(){\n"+codeText+"\n})();");
+
+	let consoleContent = [];
+
+	let captureConsole = {
+		log: function() {
+			console.log.apply(console, arguments);
+			let str = '';
+			for (let i = 0; i < arguments.length; ++i) {
+				if (i !== 0) str += ' ';
+				str += '' + arguments[i];
+			}
+			consoleContent.push(str + findLineNumber());
+		},
+		warn: function() { console.warn.apply(console, arguments); },
+		assert: function() { console.assert.apply(console, arguments); },
+		error: function() { console.error.apply(console, arguments); }
+	};
+
+	if (codeText.startsWith('#!')) {
+		codeText = '//' + codeText;
+	}
+
+	const run = new Function('require', 'console', codeText);
+	run(require, captureConsole);
+
+	if (knitoutContent === '') {
+		knitoutContent = consoleContent.join('\n');
+	}
+
     return knitoutContent;
 }

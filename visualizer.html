@@ -2,7 +2,7 @@
 <html>
 <head>
 <meta charset="UTF-8"> 
-<title>Test of knitout visualizer (3)</title>
+<title>Knitout Visualizer</title>
 </head>
 <style>
 code.knitout {
@@ -141,6 +141,8 @@ pre {
 <div id="top">
 <input id="file" type="file" />
 <label id="fileLabel" for="file"><span>Load a knitout or js file</span></label>
+<span id="fileName">(no file loaded)</span>
+<button id="reload">Reload</button>
 <button id="compile">Run/Show</button>
 <button id="save" onclick="saveKnitout();">Save Knitout</button>
 <input type="checkbox"  name="showKnitout" id="showKnitout" onchange="toggleKnitout()">Show Knitout
@@ -260,7 +262,7 @@ show.showKnitout.onHoverSource = function(source) {
 	}
 };
 
- let knitout;
+let knitout;
 function updateVisualizer() {
 	updateKnitoutMode();
 
@@ -289,12 +291,23 @@ updateVisualizer();
 let compile = document.getElementById("compile");
 compile.addEventListener('click', updateVisualizer);
 
+let reload = document.getElementById("reload");
+let currentFile = null;
+reload.addEventListener('click', function() {
+	if (currentFile) {
+		readFile(currentFile);
+	}
+});
+
+
 function readFile(file) {
 	console.log("Attempting to read file: '" + file.name + "'");
 
 	//generate new data:
 	var reader = new FileReader();
 	reader.onload = function(){
+		currentFile = file;
+		document.getElementById('fileName').innerText = file.name;
 		console.log("read " + file.name);
 		editor.setValue(reader.result, -1);
 		updateVisualizer();
