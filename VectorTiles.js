@@ -6,6 +6,10 @@ VectorTiles.LoopWidth = 13;
 VectorTiles.YarnWidth = 7;
 VectorTiles.TileHeight = 9;
 
+
+//tile lines will be stored into a larger grid to accelerate clipping:
+const GridSize = 200;
+
 function Drawing() {
 	this.back = {}; //{ style:{style: , lines:[ [x0, y0, x1, y1, ... ], ... ]}, ... }
 	this.backSliders = {};
@@ -21,26 +25,50 @@ Drawing.prototype.addLine = function Drawing_addLine(layer, styles, label, pts, 
 	if (typeof(ofs) === 'undefined') ofs = {x:0.0, y:0.0};
 	if (typeof(z) === 'undefined') z = 0;
 
+	//add ofs to points:
+	pts = pts.slice();
+	for (let i = 0; i < pts.length; i += 2) {
+		pts[i] += ofs.x;
+		pts[i+1] += ofs.y;
+	}
+
+	/*
+	//NOTE: bounds logic doesn't work with the crossing-lines hack (which uses a [x,y,fs, x,y,bs] format)
+	//compute bounds of points:
+	let min = {x:Infinity, y:Infinity};
+	let max = {x:-Infinity, y:-Infinity};
+	for (let i = 0; i < pts.length; i += 2) {
+		min.x = Math.min(min.x, pts[i]);
+		min.y = Math.min(min.y, pts[i+1]);
+		max.x = Math.max(max.x, pts[i]);
+		max.y = Math.max(max.y, pts[i+1]);
+	}
+
+	if (min.x > max.x) return; //empty!
+	*/
+
 	let style = styles[label];
 	if (!style) style = defaultStyle;
 	if (!('key' in style)) {
 		style.key = (freshKey++).toString();
 	}
 	if (!(style.key in layer)) {
-		layer[style.key] = {style:style, lines:[]};
+		layer[style.key] = {style:style, grid:[]};
 	}
-	let g = layer[style.key];
-	if (typeof(ofs) !== 'undefined') {
-		pts = pts.slice();
-		for (let i = 0; i < pts.length; i += 2) {
-			pts[i] += ofs.x;
-			pts[i+1] += ofs.y;
-		}
+
+	//update style layer to include bounds:
+	let ls = layer[style.key];
+	let gridKey = (Math.floor(pts[0] / GridSize)) + " " + (Math.floor(pts[1] / GridSize));
+
+	if (!(gridKey in ls.grid)) {
+		ls.grid[gridKey] = [];
 	}
-	while (z >= g.lines.length) {
-		g.lines.push([]);
+
+	let g = ls.grid[gridKey];
+	while (z >= g.length) {
+		g.push([]);
 	}
-	g.lines[z].push(pts);
+	g[z].push(pts);
 };
 
 VectorTiles.makeDrawing = function Vectortiles_makeDrawing() {
@@ -74,10 +102,50 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 	let middleTintRGBA = options.middleTintRGBA || [1.0, 1.0, 1.0, 0.0];
 	let backTintRGBA = options.backTintRGBA || [1.0, 1.0, 1.0, 0.0];
 
+	let viewMin = {x:Infinity, y:Infinity};
+	let viewMax = {x:-Infinity, y:-Infinity};
+	{ //read view from context:
+		let xf = ctx.getTransform();
+		xf.invertSelf();
+
+		function doPt(x,y) {
+			let tx = xf.a * x + xf.c * y + xf.e;
+			let ty = xf.b * x + xf.d * y + xf.f;
+			viewMin.x = Math.min(viewMin.x, tx);
+			viewMin.y = Math.min(viewMin.y, ty);
+			viewMax.x = Math.max(viewMax.x, tx);
+			viewMax.y = Math.max(viewMax.y, ty);
+		}
+		doPt(0,0);
+		doPt(0,ctx.canvas.height);
+		doPt(ctx.canvas.width,0);
+		doPt(ctx.canvas.width,ctx.canvas.height);
+
+		if (viewMin.x > viewMax.x) {
+			//empty view
+			viewMin.x = viewMax.x = viewMin.y = viewMax.y = 0;
+		}
+	}
+
 	ctx.save();
 	ctx.lineCap = "round";
 	ctx.lineJoin = "round";
 	ctx.strokeWidth = 1.0;
+
+	let gridKeys = [];
+	//NOTE: could extend viewMin / viewMax to avoid lines that start outside the view being clipped.
+	for (let gx = Math.floor(viewMin.x / GridSize); gx <= Math.ceil(viewMax.x / GridSize); ++gx) {
+		for (let gy = Math.floor(viewMin.y / GridSize); gy <= Math.ceil(viewMax.y / GridSize); ++gy) {
+			gridKeys.push(gx + " " + gy);
+/*
+			//DEBUG: show grid
+			ctx.fillStyle = '#f0f';
+			ctx.fillRect(gx * GridSize + 2, gy * GridSize + 2, GridSize - 4, GridSize - 4);
+*/
+		}
+	}
+
+
 
 	function tint(color, tintRGBA) {
 		let colorRGB;
@@ -118,16 +186,19 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 		while (again) {
 			again = false;
 			for (let sk in layer) {
-				let g = layer[sk];
-				if (z >= layer[sk].lines.length) continue;
-				again = true;
-				ctx.strokeStyle = tint(g.style.color, layerTintRGBA);
+				let ls = layer[sk];
+				ctx.strokeStyle = tint(ls.style.color, layerTintRGBA);
 				ctx.beginPath();
-				g.lines[z].forEach(function(line){
-					ctx.moveTo(line[0], line[1]);
-					for (let i = 2; i < line.length; i += 2) {
-						ctx.lineTo(line[i], line[i+1]);
-					}
+				gridKeys.forEach(function(gk){
+					if (!(gk in ls.grid)) return;
+					if (z >= ls.grid[gk].length) return;
+					again = true;
+					ls.grid[gk][z].forEach(function(line){
+						ctx.moveTo(line[0], line[1]);
+						for (let i = 2; i < line.length; i += 2) {
+							ctx.lineTo(line[i], line[i+1]);
+						}
+					});
 				});
 				ctx.stroke();
 			}
@@ -144,14 +215,17 @@ VectorTiles.draw = function VectorTiles_draw(ctx, drawing, options) {
 	ctx.translate(-backSlidersOfs.x, -backSlidersOfs.y);
 
 	for (let sk in drawing.middle) {
-		let g = drawing.middle[sk];
-		ctx.strokeStyle = tint(g.style.color, middleTintRGBA);
+		let ls = drawing.middle[sk];
+		ctx.strokeStyle = tint(ls.style.color, middleTintRGBA);
 		ctx.beginPath();
-		g.lines.forEach(function(lines,z) {
-			lines.forEach(function(line){
-				console.assert(line.length === 6, "bridges should be [fx,fy,fs,bx,by,bs]");
-				ctx.moveTo(line[0] + (line[2] ? frontSlidersOfs.x : frontOfs.x), line[1] + (line[2] ? frontSlidersOfs.y : frontOfs.y));
-				ctx.lineTo(line[3] + (line[5] ? backSlidersOfs.x : backOfs.x), line[4] + (line[5] ? backSlidersOfs.y : backOfs.y));
+		gridKeys.forEach(function(gk){
+			if (!(gk in ls.grid)) return;
+			ls.grid[gk].forEach(function(lines,z) {
+				lines.forEach(function(line){
+					console.assert(line.length === 6, "bridges should be [fx,fy,fs,bx,by,bs]");
+					ctx.moveTo(line[0] + (line[2] ? frontSlidersOfs.x : frontOfs.x), line[1] + (line[2] ? frontSlidersOfs.y : frontOfs.y));
+					ctx.lineTo(line[3] + (line[5] ? backSlidersOfs.x : backOfs.x), line[4] + (line[5] ? backSlidersOfs.y : backOfs.y));
+				});
 			});
 		});
 		ctx.stroke();
