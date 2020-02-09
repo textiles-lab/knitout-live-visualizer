@@ -62,10 +62,11 @@ body {
 #visualizer {
 	width:50vw;
 	height:100%;
+	position:relative;
 }
 #show {
 	width: 100%;
-	height: 80vh;
+	height: 100%;
 }
 #editor {
 	flex-grow:1;
@@ -225,6 +226,10 @@ editor.session.setMode("ace/mode/javascript");
 
 var show = document.getElementById('show');
 
+window.addEventListener('resize', function(){
+	show.showKnitout.requestDraw();
+});
+
 show.showKnitout.clickLine = function(source) {
 	console.log("Jump to: " + source);
 	let line = parseInt(source);
@@ -329,6 +334,7 @@ function updateKnitoutMode() {
 		editor.getSession().setMode("ace/mode/javascript");
 	}
 }
+
 
 /*
 var dropTarget = document.getElementById("dropTarget");

@@ -145,14 +145,16 @@ ShowKnitout.prototype.setCurrentTransform = function ShowKnitout_setCurrentTrans
 };
 
 ShowKnitout.prototype.draw = function ShowKnitout_draw() {
-	//handle resizing:
 	let rect = this.canvas.getBoundingClientRect();
 	const w = Math.round(rect.width * window.devicePixelRatio);
 	const h = Math.round(rect.height * window.devicePixelRatio);
+
 	this.canvas.width = w;
 	this.canvas.height = h;
+	/*
 	this.canvas.style.width = (w / window.devicePixelRatio) + "px";
 	this.canvas.style.height = (h / window.devicePixelRatio) + "px";
+	*/
 
 	//blank and continue:
 	const ctx = this.ctx;
