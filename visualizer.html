@@ -314,7 +314,14 @@ function readFile(file) {
 		currentFile = file;
 		document.getElementById('fileName').innerText = file.name;
 		console.log("read " + file.name);
-		editor.setValue(reader.result, -1);
+		let text = reader.result;
+		let oldText = text;
+		//line ending conversion:
+		text = text.replace(/\r\n/g,"\n");
+		if (oldText != text) {
+			console.warn("Converted dos-style line endings to unix-style.")
+		}
+		editor.setValue(text, -1);
 		updateVisualizer();
 	};
 	console.log("reading " + file.name);

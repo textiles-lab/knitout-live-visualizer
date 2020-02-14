@@ -198,48 +198,55 @@ outhook 7</code></pre>
 
 	function readFile(file) {
 
-	       var oldSize = 0;
-	       var oldCheck = 0;
-	       var oldText = null;
+		var oldSize = 0;
+		var oldCheck = 0;
+		var oldText = null;
 
-	       function spinPoll() {
-	           spin();
-	           setTimeout(function() {
-	               pollFile();
-	               setTimeout(noSpin, 50);
-	           }, 50);
-	       }
-	       function pollFile() {
-	               spin();
-	               //generate new data:
-	               let reader = new FileReader();
-	               reader.onload = function(){
-	                       if (reader.result !== oldText) {
-	                               oldText = reader.result;
-	                               console.log("parsing...");
-	                               show.showKnitout.parse(reader.result, true);
-	                               console.log("done parsing.");
-	                       }
+		function spinPoll() {
+			spin();
+			setTimeout(function() {
+				pollFile();
+				setTimeout(noSpin, 50);
+			}, 50);
+		}
 
-	                       //poll again:
-	                       readFile.pollTimeout = window.setTimeout(spinPoll, 5000);
-	               };
+		function pollFile() {
+			spin();
+			//generate new data:
+			let reader = new FileReader();
+			reader.onload = function(){
+				if (reader.result !== oldText) {
+					oldText = reader.result;
+					//line ending conversion:
+					let convertedText = oldText.replace(/\r\n/g,"\n");
+					if (oldText != convertedText) {
+						console.warn("Converted dos-style line endings to unix-style.")
+					}
+					console.log("parsing...");
+					show.showKnitout.parse(convertedText, true);
+					console.log("done parsing.");
+				}
 
-	               reader.onerror = function() {
-	                   console.log("ERROR")
-	                   console.log(reader.error)
-	               };
+				//poll again:
+				readFile.pollTimeout = window.setTimeout(spinPoll, 5000);
+			};
 
-	               console.log("polling " + file.name);
-	               reader.readAsText(file);
-	               console.log("Attempting to read file: '" + file.name + "'");
-	       }
-	       if ('pollTimeout' in readFile) {
-	               window.clearTimeout(readFile.pollTimeout);
-	               delete readFile.pollTimeout;
-	       }
-	       spinPoll();
+			reader.onerror = function() {
+				console.log("ERROR")
+				console.log(reader.error)
+			};
 
+			console.log("polling " + file.name);
+			reader.readAsText(file);
+			console.log("Attempting to read file: '" + file.name + "'");
+		}
+
+		if ('pollTimeout' in readFile) {
+			window.clearTimeout(readFile.pollTimeout);
+			delete readFile.pollTimeout;
+		}
+
+		spinPoll();
 	}
 
 	var dropTarget = document.getElementById("dropTarget");
