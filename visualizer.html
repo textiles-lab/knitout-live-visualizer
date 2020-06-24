@@ -268,7 +268,7 @@ show.showKnitout.onHoverSource = function(source) {
 };
 
 let knitout;
-function updateVisualizer() {
+function updateVisualizer(centerView) {
 	updateKnitoutMode();
 
 	let code = editor.getValue();
@@ -286,15 +286,15 @@ function updateVisualizer() {
 		knitout = evalJS(code);
 	}
 	//console.log(knitout);
-	show.showKnitout.parse(knitout);
+	show.showKnitout.parse(knitout, false, centerView);
 }
 
 
 
-updateVisualizer();
+updateVisualizer(true);
 
 let compile = document.getElementById("compile");
-compile.addEventListener('click', updateVisualizer);
+compile.addEventListener('click', function() { updateVisualizer(false); } );
 
 let reload = document.getElementById("reload");
 let currentFile = null;
@@ -311,6 +311,7 @@ function readFile(file) {
 	//generate new data:
 	var reader = new FileReader();
 	reader.onload = function(){
+		const sameFile = currentFile && (currentFile.name == file.name);
 		currentFile = file;
 		document.getElementById('fileName').innerText = file.name;
 		console.log("read " + file.name);
@@ -322,7 +323,7 @@ function readFile(file) {
 			console.warn("Converted dos-style line endings to unix-style.")
 		}
 		editor.setValue(text, -1);
-		updateVisualizer();
+		updateVisualizer(!sameFile);
 	};
 	console.log("reading " + file.name);
 	reader.readAsText(file);

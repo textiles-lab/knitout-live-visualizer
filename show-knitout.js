@@ -56,12 +56,15 @@ function ShowKnitout(canvas) {
 	canvas.addEventListener('wheel', function(evt){
 		evt.preventDefault();
 
+		let dY = evt.deltaY;
+		if (evt.deltaMode == 1) dY *= 16.0; //if delta is in lines, make larger
+
 		me.setCurrentTransform();
 
 		let oldX = (me.mouse.x - me.currentTransform[4]) / me.currentTransform[0];
 		let oldY = (me.mouse.y - me.currentTransform[5]) / me.currentTransform[3];
 
-		me.camera.radius *= Math.pow(0.5, -evt.deltaY / 300.0);
+		me.camera.radius *= Math.pow(0.5, -dY / 300.0);
 
 		me.setCurrentTransform();
 
@@ -351,7 +354,7 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 	}
 };
 
-ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsSource=false) {
+ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsSource=false, resetView=false) {
 
 	let oldMin = this.min;
 	let oldMax = this.max;
@@ -399,7 +402,7 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsS
 	const Margin = 0.5 * TileSet.TileHeight;
 
 	//update camera based on old/new min/max:
-	if (oldMin.x >= oldMax.x || oldMin.y >= oldMax.y) {
+	if (resetView || oldMin.x >= oldMax.x || oldMin.y >= oldMax.y) {
 		//old min/max invalid, frame whole piece:
 		this.camera.x = 0.5 * (this.max.x + this.min.x);
 		this.camera.y = 0.5 * (this.max.y + this.min.y);
