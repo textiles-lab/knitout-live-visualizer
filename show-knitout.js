@@ -53,6 +53,7 @@ function ShowKnitout(canvas) {
 		me.requestDraw();
 		return false;
 	});
+
 	canvas.addEventListener('wheel', function(evt){
 		evt.preventDefault();
 
@@ -108,6 +109,7 @@ function ShowKnitout(canvas) {
 			return false;
 		}
 	});
+
 	canvas.addEventListener('mousedown', function(evt){
 		evt.preventDefault();
 		if (me.hovered && me.hovered.tile.source) {
@@ -115,6 +117,11 @@ function ShowKnitout(canvas) {
 				me.onClickSource(me.hovered.tile.source);
 			}
 		}
+		return false;
+	});
+
+	canvas.addEventListener('mouseover', function(evt){
+		canvas.focus();
 		return false;
 	});
 }
