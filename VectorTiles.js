@@ -493,7 +493,7 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 			}
 		}
 	} else if (type === 't') {
-		if (bed === 'b') doLoops(0);
+		if (bed[0] === 'b') doLoops(0);
 		if (yarns.length >= 1) {
 			let y0 = yarns[0];
 			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll, 1);
@@ -504,9 +504,9 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 				drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, 13.0, 3.5 ], ll, 1);
 			}
 		}
-		if (bed === 'f') doLoops(2);
+		if (bed[0] === 'f') doLoops(2);
 	} else if (type === 'm') {
-		if (bed === 'b') doLoops(0);
+		if (bed[0] === 'b') doLoops(0);
 		if (yarns.length >= 1) {
 			let y0 = yarns[0];
 			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 13.0, 4.5], ll, 1);
@@ -515,9 +515,9 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 13.0, 3.5 ], ll, 1);
 			}
 		}
-		if (bed === 'f') doLoops(2);
+		if (bed[0] === 'f') doLoops(2);
 	} else if (type === 'S') {
-		if (bed === 'b') doLoops(0);
+		if (bed[0] === 'b') doLoops(0);
 		if (across.length >= 1) {
 			let a0 = across[0];
 			drawing.addLine(layer, styles, a0, [ 1.5, 6.5, 1.5, 7.5, 4.5, 7.5, 4.5, 9.0 ], ll, 1);
@@ -530,7 +530,7 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 			}
 		}
 
-		if (bed === 'f') doLoops(2);
+		if (bed[0] === 'f') doLoops(2);
 	} else if (type === 's') {
 		if (yarns.length >= 1 && loops.length >= 1) {
 			//TODO: loops === across, right?
@@ -621,7 +621,7 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 		}
 
 	} else if (type === 'X') { //xfer target
-		if (bed === 'b') doLoops();
+		if (bed[0] === 'b') doLoops();
 		if (across.length >= 1) {
 			let a0 = across[0];
 			drawing.addLine(layer, styles, a0, [ 4.5, 6.5, 4.5, 9.0 ], ll);
@@ -633,7 +633,7 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 				drawing.addLine(layer, styles, a1, [ 7.5, 6.5, 7.5, 9.0 ], ll);
 			}
 		}
-		if (bed === 'f') doLoops();
+		if (bed[0] === 'f') doLoops();
 	} else if (type === 'x') {
 		//TO CHECK: across === loops, right?
 		if (across.length >= 1) {
