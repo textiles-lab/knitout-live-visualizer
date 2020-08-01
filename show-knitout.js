@@ -83,7 +83,7 @@ function ShowKnitout(canvas) {
 	});
 
 	canvas.addEventListener('keydown', function(evt){
-		console.log(evt);
+		//console.log(evt);
 		if (evt.code === "ShiftLeft" || evt.code === "ShiftRight") {
 			evt.preventDefault();
 			me.show = SHOW_BACK;
@@ -101,7 +101,7 @@ function ShowKnitout(canvas) {
 	});
 
 	canvas.addEventListener('keyup', function(evt){
-		console.log(evt);
+		//console.log(evt);
 		if (evt.code === "ShiftLeft" || evt.code === "ShiftRight") {
 			evt.preventDefault();
 			me.show = SHOW_BOTH;

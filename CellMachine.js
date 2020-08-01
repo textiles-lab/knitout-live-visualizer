@@ -961,7 +961,6 @@ CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells
 
 			let fromBack = new YarnCell();
 			fromBack.dir = d;
-			console.log(toFront,fromBack); //DEBUG
 
 			let front = this.beds['f'].getColumn(yarnAfterIndex(frontD, frontN));
 			['-','+'].forEach(function(side){
