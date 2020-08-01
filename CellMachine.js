@@ -105,6 +105,7 @@ function YarnCell() {
 		'v-':[], 'v+':[]
 	};
 	this.segs = []; //like: {cn:'A', from:'^-', to:'x+'}
+	this.dir = '';
 }
 
 YarnCell.prototype.addSeg = function YarnCell_addSeg(yarn, from, to) {
@@ -264,6 +265,7 @@ YarnCell.prototype.desc = function YarnCell_desc() {
 function LoopCell(type) {
 	this.type = type;
 	this.y = 0;
+	this.dir = '';
 	this.ports = { '-':[], '+':[], 'v':[], '^':[], 'x':[], 'o':[] };
 }
 
@@ -621,6 +623,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 			let up = (front.length ? front[front.length-1].ports['^'] : []);
 
 			let miss = new LoopCell('m');
+			miss.dir = '+';
 			up.forEach(function(cn){
 				miss.addOut('v', cn);
 				miss.addOut('^', cn);
@@ -633,6 +636,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 		} else {
 			//yarn tile
 			let cell = new YarnCell();
+			cell.dir = '+';
 			let movingFrom = {};
 			movingRight.forEach(function(cn){
 				movingFrom[cn] = '-';
@@ -679,6 +683,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 			let up = (front.length ? front[front.length-1].ports['^'] : []);
 
 			let miss = new LoopCell('m');
+			miss.dir = '-';
 			up.forEach(function(cn){
 				miss.addOut('v', cn);
 				miss.addOut('^', cn);
@@ -691,6 +696,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 		} else {
 			//yarn tile
 			let cell = new YarnCell();
+			cell.dir = '-';
 			let movingFrom = {};
 			movingLeft.forEach(function(cn){
 				movingFrom[cn] = '+';
@@ -794,6 +800,7 @@ CellMachine.prototype.bringCarriers = function CellMachine_bringCarriers(d, n, c
 		//make bridge to the back bed:
 		let cells = [];
 		let toBack = new YarnCell();
+		toBack.dir = d;
 
 		let front = this.beds['f'].getColumn(targetIndex);
 
@@ -854,6 +861,7 @@ CellMachine.prototype.makeTurnBefore = function CellMachine_makeTurnBefore(d, n,
 	//Turn carriers toward the needle:
 	if (cs.length) {
 		let turn = new YarnCell();
+		turn.dir = d;
 
 		let column = this.beds[needleBed(n)].getColumn(yarnBeforeIndex(d,n));
 		console.assert(column.length, "carriers must be here already");
@@ -883,6 +891,7 @@ CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells
 	//turn carriers back up:
 	if (cs.length) {
 		let turn = new YarnCell();
+		turn.dir = d;
 
 		let column = this.beds[needleBed(n)].getColumn(yarnAfterIndex(d,n));
 		if (column.length) {
@@ -943,6 +952,7 @@ CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells
 
 			let cells = [];
 			let toFront = new YarnCell();
+			toFront.dir = d;
 			cs.forEach(function(cn){
 				toFront.addSeg(cn,'v' + (d === '+' ? '-' : '+'), crossFrom);
 			}, this);
@@ -950,6 +960,8 @@ CellMachine.prototype.makeAfter = function CellMachine_makeAfter(d, n, cs, cells
 			cells.push({bed:'b', i:yarnAfterIndex(d,n), cell:toFront});
 
 			let fromBack = new YarnCell();
+			fromBack.dir = d;
+			console.log(toFront,fromBack); //DEBUG
 
 			let front = this.beds['f'].getColumn(yarnAfterIndex(frontD, frontN));
 			['-','+'].forEach(function(side){
@@ -1132,6 +1144,8 @@ CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuc
 CellMachine.prototype.knit = function CellMachine_knit(d, n, cs) {
 	//build a knit face:
 	let knit = new LoopCell('k');
+	if (cs.length) knit.dir = d;
+
 	//add loop inputs from the column:
 	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
 	if (c.length) {
@@ -1152,6 +1166,7 @@ CellMachine.prototype.knit = function CellMachine_knit(d, n, cs) {
 CellMachine.prototype.tuck = function CellMachine_tuck(d, n, cs) {
 	//build a tuck face:
 	let tuck = new LoopCell('t');
+	if (cs.length) tuck.dir = d;
 
 	function addLoops() {
 		//add loop inputs from the column:
@@ -1191,6 +1206,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 
 	//add a pair of faces:
 	let xferFrom = new LoopCell((cs.length ? 's' : 'x'));
+	if (cs.length) xferFrom.dir = d;
 
 	cs.forEach(function(cn){
 		xferFrom.addOut((d === '+' ? '-' : '+'), cn);
@@ -1201,6 +1217,8 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 	cells.push({i:needleIndex(n), cell:xferFrom});
 
 	let xferTo = new LoopCell((cs.length ? 'S' : 'X'));
+	if (cs.length) xferTo.dir = d;
+
 	cells.push({bed:needleBed(n2), i:needleIndex(n2), cell:xferTo});
 
 	let fromPort = (needleBed(n)[0] === 'f' ? 'x' : 'o');
@@ -1293,6 +1311,7 @@ CellMachine.prototype['x-vis-color'] = function Cellmachine_x_vis_color(args) {
 
 //used to stretch loops/yarns to the current topRow:
 CellMachine.prototype.stretchLoops = function CellMachine_stretchLoops() {
+	this.topRow += 1;
 	let y = this.topRow;
 	for (let b in this.beds) {
 		let bed = this.beds[b];

@@ -254,10 +254,16 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 
 	if (this.hovered) {
 		let x = this.columnX[this.hovered.col];
+		let y = this.min.y;
 		let w = (this.hovered.col+1 < this.columnX.length ? this.columnX[this.hovered.col+1] : this.width) - x;
+		let h = this.max.y - this.min.y;
+		if (this.hovered.bed === 'b') {
+			x += -0.15 * TileSet.LoopWidth;
+			y += 0.2 * TileSet.TileHeight;
+		}
 		ctx.globalAlpha = 0.1;
 		ctx.fillStyle = '#fff';
-		ctx.fillRect(x,0, w,this.height);
+		ctx.fillRect(x,y, w,h);
 		ctx.globalAlpha = 1.0;
 	}
 
@@ -281,11 +287,44 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		ctx.beginPath();
 		ctx.moveTo(x,y);
 		ctx.lineTo(x+width,y);
+		/*
+		if (this.hovered.tile.dir === '+') {
+			ctx.lineTo(x+width + 0.1 * TileSet.TileHeight,y+0.5*height);
+		} else if (this.hovered.tile.dir === '-') {
+			ctx.lineTo(x+width + -0.1 * TileSet.TileHeight,y+0.5*height);
+		}
+		*/
 		ctx.lineTo(x+width,y+height);
 		ctx.lineTo(x,y+height);
+		/*
+		if (this.hovered.tile.dir === '+') {
+			ctx.lineTo(x + 0.1 * TileSet.TileHeight,y+0.5*height);
+		} else if (this.hovered.tile.dir === '-') {
+			ctx.lineTo(x + -0.1 * TileSet.TileHeight,y+0.5*height);
+		}
+		*/
 		ctx.closePath();
 		ctx.strokeStyle = (this.hovered.bed === 'f' ? '#fff' : '#ddd');
 		ctx.stroke();
+
+		const s = 0.2 * TileSet.TileHeight;
+		if (this.hovered.tile.dir === '+') {
+			ctx.beginPath();
+			ctx.moveTo(x + 0.5 * width - 0.25 * s, y + 0.5 * height - s);
+			ctx.lineTo(x + 0.5 * width + 0.25 * s, y + 0.5 * height);
+			ctx.lineTo(x + 0.5 * width - 0.25 * s, y + 0.5 * height + s);
+			ctx.globalAlpha = 0.5;
+			ctx.stroke();
+			ctx.globalAlpha = 1.0;
+		} else if (this.hovered.tile.dir === '-') {
+			ctx.beginPath();
+			ctx.moveTo(x + 0.5 * width + 0.25 * s, y + 0.5 * height - s);
+			ctx.lineTo(x + 0.5 * width - 0.25 * s, y + 0.5 * height);
+			ctx.lineTo(x + 0.5 * width + 0.25 * s, y + 0.5 * height + s);
+			ctx.globalAlpha = 0.5;
+			ctx.stroke();
+			ctx.globalAlpha = 1.0;
+		}
 	}
 
 	if (this.hovered !== this.oldHovered) {
