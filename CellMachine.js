@@ -424,16 +424,32 @@ CellMachine.prototype.addCells = function CellMachine_addCells(b, list, cross) {
 	}
 
 	list.forEach(function(icell){
-		let bed = this.beds[('bed' in icell ? icell.bed : b)];
-		let column = bed.getColumn(icell.i);
-		if (column.length) {
-			let back = column[column.length-1];
-			if (back.y >= y) {
-				y = back.y;
-				if (!icell.cell.canAbsorb(back)) {
+		let bedName = ('bed' in icell ? icell.bed : b);
+		{ //check column containing cell:
+			let bed = this.beds[bedName];
+			let column = bed.getColumn(icell.i);
+			if (column.length) {
+				let back = column[column.length-1];
+				if (back.y >= y) {
+					y = back.y;
+					if (!icell.cell.canAbsorb(back)) {
+						y = back.y + 1;
+					}
+				}
+			}
+		}
+		{ //check sliders/hook of column containing cell:
+			let bedName2 = (bedName.length == 2 ? bedName[0] : bedName + 's');
+			console.assert(bedName2 in this.beds);
+			let bed = this.beds[bedName2];
+			let column = bed.getColumn(icell.i);
+			if (column.length) {
+				let back = column[column.length-1];
+				if (back.y >= y) {
 					y = back.y + 1;
 				}
 			}
+
 		}
 	}, this);
 
