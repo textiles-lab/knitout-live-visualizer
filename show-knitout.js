@@ -327,7 +327,8 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		}
 	}
 
-	if (this.hovered !== this.oldHovered) {
+	if (this.hovered !== oldHovered) {
+		if (this.hovered) { console.log(this.hovered.tile); } //DEBUG
 		if (this.highlightLine) {
 			this.highlightLine(this.hovered ? this.hovered.tile.source : "");
 		}
