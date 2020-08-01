@@ -1060,20 +1060,36 @@ CellMachine.prototype.out = function CellMachine_out(cs) {
 			let column = this.beds[needleBed(c.after.n)].getColumn(yarnAfterIndex(c.after.d,c.after.n));
 			console.assert(column.length, "can't take a carrier out of an empty yarn column");
 			let cell = column[column.length-1];
-			let portName = (c.after.d === '+' ? '^-' : '^+')
-			let port = cell.ports[portName];
-			let idx = port.indexOf(cn);
-			console.assert(idx !== -1, "must have yarn in column where it's being removed");
-			port.splice(idx, 1);
+
+			//build a new cell that takes out (just) this yarn:
+			let csL = cell.ports['^-'];
+			let csR = cell.ports['^+'];
 			let found = false;
-			cell.segs.forEach(function(seg){
-				if (seg.cn === cn && seg.to === portName) {
-					console.assert(!found, "only one seg");
+			let newCell = new YarnCell();
+			csL.forEach(function (cn2) {
+				if (cn2 === cn) {
+					console.assert(c.after.d === '+', "carrier in proper column");
+					console.assert(!found, "only one instance of carrier");
+					newCell.addSeg(cn, 'v-', '');
 					found = true;
-					seg.to = '';
+				} else {
+					newCell.addSeg(cn2, 'v-', '^-');
 				}
-			}, this);
+			});
+			csR.forEach(function (cn2) {
+				if (cn2 === cn) {
+					console.assert(c.after.d === '-', "carrier in proper column");
+					console.assert(!found, "only one instance of carrier");
+					newCell.addSeg(cn, 'v+', '');
+					found = true;
+				} else {
+					newCell.addSeg(cn2, 'v+', '^+');
+				}
+			});
 			console.assert(found, "exactly one seg");
+			newCell.styles = cell.styles;
+
+			this.addCells(needleBed(c.after.n), [{i:yarnAfterIndex(c.after.d, c.after.n), cell:newCell}]);
 
 			delete c.after;
 		}
