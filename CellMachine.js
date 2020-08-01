@@ -1291,6 +1291,53 @@ CellMachine.prototype['x-vis-color'] = function Cellmachine_x_vis_color(args) {
 	}
 };
 
+//used to stretch loops/yarns to the current topRow:
+CellMachine.prototype.stretchLoops = function CellMachine_stretchLoops() {
+	let y = this.topRow;
+	for (let b in this.beds) {
+		let bed = this.beds[b];
+		for (let i = bed.minIndex; i <= bed.maxIndex; ++i) {
+			let column = bed.getColumn(i, false);
+			if (column === null) continue;
+			if (column.length === 0) continue;
+
+			if (i % 2 === 0) {
+				let cs = column[column.length-1].ports['^'];
+				if (cs.length === 0) continue;
+
+				while (column[column.length-1].y < y) {
+					let empty = new LoopCell('m');
+					empty.y = column[column.length-1].y + 1;
+					cs.forEach(function (cn) {
+						empty.addOut('v', cn);
+						empty.addOut('^', cn);
+					});
+					empty.styles = column[column.length-1].styles;
+					column.push(empty);
+				}
+			} else {
+				let csL = column[column.length-1].ports['^-'];
+				let csR = column[column.length-1].ports['^+'];
+				if (csL.length === 0 && csR.length === 0) continue;
+
+				while (column[column.length-1].y < y) {
+					let empty = new YarnCell();
+					empty.y = column[column.length-1].y + 1;
+					csL.forEach(function (cn) {
+						empty.addSeg(cn, 'v-', '^-');
+					});
+					csR.forEach(function (cn) {
+						empty.addSeg(cn, 'v+', '^+');
+					});
+					empty.styles = column[column.length-1].styles;
+					column.push(empty);
+				}
+			}
+
+		}
+	}
+};
+
 if (typeof(module) !== "undefined") {
 	module.exports.CellMachine = CellMachine;
 }

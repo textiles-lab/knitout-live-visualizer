@@ -373,6 +373,9 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsS
 		console.log("parse error:",e);
 	}
 
+	//extend loops/yarns to the top of the machine:
+	machine.stretchLoops();
+
 	//This seems really out of place, but I'm leaving it in for now:
 	let code = document.getElementById('code1');
 	if (code) {
