@@ -373,21 +373,22 @@ ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsS
 		console.log("parse error:",e);
 	}
 
-        let code = document.getElementById('code1');
-        if (code) {
-            code.innerHTML = "";
-            let lines = codeText.split("\n");
-            let annotatedLines = ""
-            for (let i = 0; i < lines.length; i++) {
-                // Remove source line comments
-                /*let sourceCommentIndex = lines[i].indexOf(";!source:");
-                if (sourceCommentIndex >= 0) {
-                    lines[i] = lines[i].substring(0, sourceCommentIndex);
-                }*/
-                annotatedLines += "<span class='line' id='LineNo" + i + "'><span class='lineNumber'>" + i + "</span>" + lines[i] + "</span>\n";
-            }
-            code.innerHTML = annotatedLines;
-        }
+	//This seems really out of place, but I'm leaving it in for now:
+	let code = document.getElementById('code1');
+	if (code) {
+		code.innerHTML = "";
+		let lines = codeText.split("\n");
+		let annotatedLines = ""
+		for (let i = 0; i < lines.length; i++) {
+			// Remove source line comments
+			/*let sourceCommentIndex = lines[i].indexOf(";!source:");
+			if (sourceCommentIndex >= 0) {
+				lines[i] = lines[i].substring(0, sourceCommentIndex);
+			}*/
+			annotatedLines += "<span class='line' id='LineNo" + i + "'><span class='lineNumber'>" + i + "</span>" + lines[i] + "</span>\n";
+		}
+		code.innerHTML = annotatedLines;
+	}
 
 	this.requestDraw();
 
