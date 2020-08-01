@@ -262,8 +262,15 @@ show.showKnitout.onHoverSource = function(source) {
 	oldHoveredRow = line;
 	if (line === line) {
 		editor.session.addGutterDecoration(oldHoveredRow-1, "knitoutBox");
-	} else {
-		//console.log("Unhighlight");
+	}
+};
+
+show.showKnitout.onDoubleClickSource = function(source) {
+	//console.log("onDoubleClick '" + source + "'"); //DEBUG
+	let line = parseInt(source);
+	if (line === line) {
+		//console.log("Should scroll to " + line);
+		editor.scrollToLine(line-1, true, true, () => {});
 	}
 };
 

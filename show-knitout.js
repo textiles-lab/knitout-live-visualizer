@@ -110,6 +110,16 @@ function ShowKnitout(canvas) {
 		}
 	});
 
+	canvas.addEventListener('dblclick', function(evt){
+		if (me.onDoubleClickSource) {
+			if (me.hovered && me.hovered.tile.source) {
+				me.onDoubleClickSource(me.hovered.tile.source);
+			} else {
+				me.onDoubleClickSource();
+			}
+		}
+	});
+
 	canvas.addEventListener('mousedown', function(evt){
 		evt.preventDefault();
 		if (me.hovered && me.hovered.tile.source) {
@@ -267,9 +277,13 @@ ShowKnitout.prototype.draw = function ShowKnitout_draw() {
 		ctx.globalAlpha = 1.0;
 	}
 
-	if (oldHovered !== this.hovered && this.hovered && this.hovered.tile.source) {
+	if (oldHovered !== this.hovered) {
 		if (this.onHoverSource) {
-			this.onHoverSource(this.hovered.tile.source);
+			if (this.hovered && this.hovered.tile.source) {
+				this.onHoverSource(this.hovered.tile.source);
+			} else {
+				this.onHoverSource();
+			}
 		}
 	}
 
