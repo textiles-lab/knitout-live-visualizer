@@ -189,7 +189,7 @@ function evalJS(codeText){
             throw "It doesn't make sense to 'in' on an empty carrier set.";
         }
 
-        this._operations.push('in ' + cs.join(' '));
+        this._operations.push('in ' + cs.join(' ')+ ' ' + findLineNumber());
 
     };
 
@@ -200,7 +200,7 @@ function evalJS(codeText){
             throw "It doesn't make sense to 'inhook' on an empty carrier set.";
         }
 
-        this._operations.push('inhook ' + cs.join(' '));
+        this._operations.push('inhook ' + cs.join(' ')+ ' ' + findLineNumber());
 
     };
 
@@ -212,7 +212,7 @@ function evalJS(codeText){
             throw "It doesn't make sense to 'releasehook' on an empty carrier set.";
         }
 
-        this._operations.push('releasehook ' + cs.join(' '));
+        this._operations.push('releasehook ' + cs.join(' ')+ ' ' + findLineNumber());
 
     };
 
@@ -223,7 +223,7 @@ function evalJS(codeText){
             throw "It doesn't make sense to 'out' on an empty carrier set.";
         }
 
-        this._operations.push('out ' + cs.join(' '));
+        this._operations.push('out ' + cs.join(' ')+ ' ' + findLineNumber());
 
     };
 
@@ -234,7 +234,7 @@ function evalJS(codeText){
             throw "It doesn't make sense to 'outhook' on an empty carrier set.";
         }
 
-        this._operations.push('outhook ' + cs.join(' '));
+        this._operations.push('outhook ' + cs.join(' ')+ ' ' + findLineNumber());
     };
 
     function isFiniteNumber( n ) {
@@ -352,7 +352,7 @@ function evalJS(codeText){
             throw "drop only takes a bed+needle";
         }
 
-        this._operations.push('drop ' + bn.bed + bn.needle.toString());
+        this._operations.push('drop ' + bn.bed + bn.needle.toString() + ' ' + findLineNumber());
     };
 
     // amiss -> tuck without yarn, but supported in knitout
@@ -396,7 +396,7 @@ function evalJS(codeText){
     Writer.prototype.pause = function(comment){
         // deals with multi-line comments
         this.comment(comment);
-        this._operations.push('pause');
+        this._operations.push('pause'+ ' ' + findLineNumber());
     };
 
     Writer.prototype.write = function(filename){
@@ -428,7 +428,17 @@ function evalJS(codeText){
 				if (i !== 0) str += ' ';
 				str += '' + arguments[i];
 			}
-			consoleContent.push(str + findLineNumber());
+			//comment-only lines (e.g. comment header, magic number) get preserved:
+			if (str.match(/^\s*;/)) {
+				consoleContent.push(str);
+			} else {
+				//other lines get comments removed, and ;!source: directive added:
+				let i = str.indexOf(';');
+				if (i !== -1) {
+					str = str.substr(0,i);
+				}
+				consoleContent.push(str + findLineNumber());
+			}
 		},
 		warn: function() { console.warn.apply(console, arguments); },
 		assert: function() { console.assert.apply(console, arguments); },

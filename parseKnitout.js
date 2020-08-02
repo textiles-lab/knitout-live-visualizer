@@ -30,7 +30,7 @@ function parseKnitout(codeText, machine, useKnitoutAsSource=false) {
 					addWarning("Parsed version (" + m.groups(1) + ") is not what was expected.");
 				}
 			} else {
-				addError("Knitout should always start with a '!;knitout-2' line.");
+				addError("Knitout should always start with a ';!knitout-2' line.");
 			}
 			//nothing more to do with the first line.
 			return;
