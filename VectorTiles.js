@@ -496,8 +496,8 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 		if (bed[0] === 'b') doLoops(0);
 		if (yarns.length >= 1) {
 			let y0 = yarns[0];
-			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll, 1);
-			drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, 13.0, 4.5 ], ll, 1);
+			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 3.5, 4.5, 4.5, 9.0 ], ll, 1);
+			drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 9.5, 4.5, 13.0, 4.5 ], ll, 1);
 			if (yarns.length >= 2) {
 				let y1 = yarns.slice(1).join(' ');
 				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll, 1);
