@@ -6,6 +6,20 @@ VectorTiles.LoopWidth = 13;
 VectorTiles.YarnWidth = 7;
 VectorTiles.TileHeight = 9;
 
+//Check that VectorTilesLib is included before this:
+let libSize = 0;
+for (const tileName in VectorTilesLib) {
+	const tile = VectorTilesLib[tileName];
+	for (const label in tile) {
+		const lines = tile[label];
+		for (const line of lines) {
+			console.assert(line.length % 2 == 0, "Line has pairs of coordinates.");
+			console.assert(line.length >= 4, "Line has at least two points.");
+		}
+	}
+	++libSize;
+}
+console.log("VectorTilesLib contains " + libSize + " tiles.");
 
 //tile lines will be stored into a larger grid to accelerate clipping:
 const GridSize = 200;
@@ -310,11 +324,11 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 		}
 
 		if (cross.yarns.length >= 1) {
-			let l0 = cross.yarns[0];
+			let l0 = cross.yarns[cross.yarns.length-1]; //frontmost yarn
 			drawing.addLine(drawing.middle, cross.styles, l0, [front.x+pf.x, front.y+pf.y0, fs, back.x+pb.x, back.y+pb.y0, bs]);
 		}
 		if (cross.yarns.length >= 2) {
-			let l1 = cross.yarns.slice(1).join(' ');
+			let l1 = cross.yarns.slice(0,cross.yarns.length-1).join(' '); //rearmost yarns(s)
 			drawing.addLine(drawing.middle, cross.styles, l1, [front.x+pf.x, front.y+pf.y1, fs, back.x+pb.x, back.y+pb.y1, bs]);
 		}
 		return;
@@ -352,12 +366,12 @@ VectorTiles.addCross = function VectorTiles_addCross(drawing, cross) {
 	}
 
 	if (cross.yarns.length >= 1) {
-		let l0 = cross.yarns[0];
+		let l0 = cross.yarns[cross.yarns.length-1]; //frontmost yarn
 		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+l, front.y, fs, back.x+l, back.y, bs ]);
 		drawing.addLine(drawing.middle, cross.styles, l0, [front.x+r, front.y, fs, back.x+r, back.y, bs ]);
 	}
 	if (cross.yarns.length >= 2) {
-		let l1 = cross.yarns.slice(1).join(' ');
+		let l1 = cross.yarns.slice(0,cross.yarns.length-1).join(' '); //rearmost yarns(s)
 		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+l+1.0, front.y, fs, back.x+l+1.0, back.y, bs ]);
 		drawing.addLine(drawing.middle, cross.styles, l1, [front.x+r-1.0, front.y, fs, back.x+r-1.0, back.y, bs ]);
 	}
@@ -371,10 +385,11 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 	console.assert(Array.isArray(tile.loops), "Expecting loops array in loop tile");
 	console.assert(Array.isArray(tile.yarns), "Expecting yarns array in loop tile");
 	console.assert(Array.isArray(tile.across), "Expecting across array in loop tile");
+	//loops, yarns, etc are listed in *back-to-front* order!
 
 	const type = tile.type;
 	const bed = tile.bed;
-	const loops = tile.loops;
+	let loops = tile.loops; //gets moved aside in xfer source hack case
 	const yarns = tile.yarns;
 	const across = tile.across;
 	if (loops.length === 0 && yarns.length === 0 && across.length === 0) return null;
@@ -387,125 +402,86 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 	}[bed];
 	let ll = tileLowerLeft(tile.i, tile.y);
 
-	function doLoops(z) {
-		if (loops.length >= 1) {
-			let l0 = loops[0];
-			drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 9.0 ], ll, z);
-			drawing.addLine(layer, styles, l0, [ 8.5, 0.0, 8.5, 9.0 ], ll, z);
+	function doLib(tileName) {
+		if (loops.length >= 2) tileName += "-l2";
+		else if (loops.length >= 1) tileName += "-l1";
+
+		if (yarns.length >= 2) tileName += "-y2";
+		else if (yarns.length >= 1) tileName += "-y1";
+
+		if (across.length >= 2) tileName += "-a2";
+		else if (across.length >= 1) tileName += "-a1";
+
+		console.assert(tileName in VectorTilesLib, "Tile '" + tileName + "' is in the library.");
+
+		const tile = VectorTilesLib[tileName];
+
+		function yarnLines(z) {
+			if (yarns.length >= 2 && "y2" in tile) {
+				let y1 = yarns.slice(0,yarns.length-1).join(' '); //rearmost yarn(s)
+				for (const line of tile.y2) {
+					drawing.addLine(layer, styles, y1, line, ll, z);
+				}
+			}
+			if (yarns.length >= 1 && "y1" in tile) {
+				let y0 = yarns[yarns.length-1]; //frontmost yarn
+				for (const line of tile.y1) {
+					drawing.addLine(layer, styles, y0, line, ll, z);
+				}
+			}
 		}
-		if (loops.length >= 2) {
-			let l1 = loops.slice(1).join(' ');
-			drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 9.0 ], ll, z);
-			drawing.addLine(layer, styles, l1, [ 7.5, 0.0, 7.5, 9.0 ], ll, z);
+
+		function loopLines(z) {
+			if (loops.length >= 2 && "l2" in tile) {
+				let l1 = loops.slice(0,loops.length-1).join(' '); //rearmost loop(s)
+				for (const line of tile.l2) {
+					drawing.addLine(layer, styles, l1, line, ll, z);
+				}
+			}
+			if (loops.length >= 1 && "l1" in tile) {
+				let l0 = loops[loops.length-1]; //frontmost loop
+				for (const line of tile.l1) {
+					drawing.addLine(layer, styles, l0, line, ll, z);
+				}
+			}
 		}
-	};
+
+		function acrossLines(z) {
+			if (across.length >= 2 && "a2" in tile) {
+				let a1 = across.slice(0,across.length-1).join(' '); //rearmost across(s)
+				for (const line of tile.a2) {
+					drawing.addLine(layer, styles, a1, line, ll, z);
+				}
+			}
+			if (across.length >= 1 && "a1" in tile) {
+				let a0 = across[across.length-1]; //frontmost across
+				for (const line of tile.a1) {
+					drawing.addLine(layer, styles, a0, line, ll, z);
+				}
+			}
+		}
+
+
+		if (bed[0] == 'f') {
+			yarnLines(0);
+			acrossLines(1);
+			loopLines(2);
+		} else {
+			loopLines(0);
+			acrossLines(1);
+			yarnLines(2);
+		}
+
+	}
 
 	let g = {lines:[]};
 	if (type === 'k') {
-		if (yarns.length >= 1 && loops.length >= 1) {
-			//actually a knit:
-			if (bed === 'f') {
-				let l0 = loops[0];
-				let l = (yarns.length === 1 ? 5.5 : 6.5);
-				let r = (yarns.length === 1 ? 7.5 : 6.5);
-				drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, 7.5, 3.5, 7.5 ], ll);
-				drawing.addLine(layer, styles, l0, [ l, 7.5, r, 7.5 ], ll);
-				drawing.addLine(layer, styles, l0, [ 9.5, 7.5, 11.5, 7.5, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0 ], ll);
-				if (loops.length >= 2) {
-					let l1 = loops.slice(1).join(' ');
-					drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 3.5, 0.5, 2.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 2.5, 2.5, 2.5, 6.5, 3.5, 6.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ l, 6.5, r, 6.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 9.5, 6.5, 10.5, 6.5, 10.5, 2.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, 0.5, 9.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 7.5, 0.5, 7.5, 0.0 ], ll);
-				}
-
-				l = (loops.length === 1 ? 2.5 : 3.5);
-				r = (loops.length === 1 ? 10.5 : 9.5);
-				let y0 = yarns[0];
-				drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 0.5, 4.5 ], ll);
-				drawing.addLine(layer, styles, y0, [ l, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, r, 4.5 ], ll);
-				drawing.addLine(layer, styles, y0, [ 12.5, 4.5, 13.0, 4.5 ], ll);
-				if (yarns.length >= 2) {
-					let y1 = yarns.slice(1).join(' ');
-					drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 0.5, 3.5 ], ll);
-					drawing.addLine(layer, styles, y1, [ l, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll);
-					drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, r, 3.5 ], ll);
-					drawing.addLine(layer, styles, y1, [ 12.5, 3.5, 13.0, 3.5 ], ll);
-				}
-			} else { console.assert(bed === 'b', "bed should be f/b");
-				let h = (yarns.length === 1 ? 3.5 : 2.5);
-				let l0 = loops[0];
-				drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, h ], ll);
-				drawing.addLine(layer, styles, l0, [ 1.5, 5.5, 1.5, 7.5, 11.5, 7.5, 11.5, 5.5, ], ll);
-				drawing.addLine(layer, styles, l0, [ 11.5, h, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0 ], ll);
-				if (loops.length >= 2) {
-					let l1 = loops.slice(1).join(' ');
-					drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 3.5, 0.5, 2.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 2.5, 2.5, 2.5, h ], ll);
-					drawing.addLine(layer, styles, l1, [ 2.5, 5.5, 2.5, 6.5, 10.5, 6.5, 10.5, 5.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, h, 10.5, 2.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, 0.5, 9.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 7.5, 0.5, 7.5, 0.0 ], ll);
-				}
-
-				h = (loops.length === 1 ? 6.5 : 5.5);
-				let y0 = yarns[0];
-				drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, h ], ll);
-				drawing.addLine(layer, styles, y0, [ 4.5, 8.5, 4.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 8.5 ], ll);
-				drawing.addLine(layer, styles, y0, [ 8.5, h, 8.5, 4.5, 13.0, 4.5 ], ll);
-
-				if (yarns.length >= 2) {
-					let y1 = yarns.slice(1).join(' ');
-					drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, h ], ll);
-					drawing.addLine(layer, styles, y1, [ 5.5, 8.5, 5.5, 9.0 ], ll);
-					drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 8.5 ], ll);
-					drawing.addLine(layer, styles, y1, [ 7.5, h, 7.5, 3.5, 13.0, 3.5 ], ll);
-				}
-
-			}
-		} else if (yarns.length >= 1) {
-			//yarns, no loops -> effectively a tuck:
-			let y0 = yarns[0];
-			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll);
-			drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, 13.0, 4.5 ], ll);
-			if (yarns.length >= 2) {
-				let y1 = yarns.slice(1).join(' ');
-				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, 13.0, 3.5 ], ll);
-			}
-		} else if (loops.length >= 1) {
-			//loops, no yarns -> drop:
-			let l0 = loops[0];
-			drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, 7.5, 11.5, 7.5, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0 ], ll);
-			if (loops.length >= 2) {
-				let l1 = loops.slice(1).join(' ');
-				drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 0.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 3.5, 0.5, 2.5, 0.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 2.5, 2.5, 2.5, 6.5, 10.5, 6.5, 10.5, 2.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 10.5, 0.5, 9.5, 0.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 7.5, 0.5, 7.5, 0.0 ], ll);
-			}
-		}
+		doLib('k-' + bed[0]);
 	} else if (type === 't') {
-		if (bed[0] === 'b') doLoops(0);
-		if (yarns.length >= 1) {
-			let y0 = yarns[0];
-			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 3.5, 4.5, 4.5, 9.0 ], ll, 1);
-			drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 9.5, 4.5, 13.0, 4.5 ], ll, 1);
-			if (yarns.length >= 2) {
-				let y1 = yarns.slice(1).join(' ');
-				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll, 1);
-				drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, 13.0, 3.5 ], ll, 1);
-			}
-		}
-		if (bed[0] === 'f') doLoops(2);
+		doLib(type + "-" + bed[0]);
 	} else if (type === 'm') {
+		doLib(type + "-" + bed[0]);
+		/*
 		if (bed[0] === 'b') doLoops(0);
 		if (yarns.length >= 1) {
 			let y0 = yarns[0];
@@ -516,137 +492,29 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 			}
 		}
 		if (bed[0] === 'f') doLoops(2);
-	} else if (type === 'S') {
-		if (bed[0] === 'b') doLoops(0);
-		if (across.length >= 1) {
-			let a0 = across[0];
-			drawing.addLine(layer, styles, a0, [ 1.5, 6.5, 1.5, 7.5, 4.5, 7.5, 4.5, 9.0 ], ll, 1);
-			drawing.addLine(layer, styles, a0, [ 11.5, 6.5, 11.5, 7.5, 8.5, 7.5, 8.5, 9.0 ], ll, 1);
-
-			if (across.length >= 2) {
-				let a1 = across.slice(1).join(' ');
-				drawing.addLine(layer, styles, a1, [ 2.5, 6.5, 5.5, 6.5, 5.5, 9.0 ], ll, 1);
-				drawing.addLine(layer, styles, a1, [ 10.5, 6.5, 7.5, 6.5, 7.5, 9.0 ], ll, 1);
-			}
-		}
-
-		if (bed[0] === 'f') doLoops(2);
-	} else if (type === 's') {
-		if (yarns.length >= 1 && loops.length >= 1) {
-			//TODO: loops === across, right?
-			//actually a split:
-			if (bed === 'f') {
-				let l0 = loops[0];
-				drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, 5.5, ], ll);
-				drawing.addLine(layer, styles, l0, [ 11.5, 5.5, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0 ], ll);
-				if (loops.length >= 2) {
-					let l1 = loops.slice(1).join(' ');
-					drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 3.5, 0.5, 2.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 2.5, 2.5, 2.5, 5.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, 5.5, 10.5, 2.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, 0.5, 9.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 7.5, 0.5, 7.5, 0.0 ], ll);
-				}
-
-				let l = (loops.length === 1 ? 2.5 : 3.5);
-				let r = (loops.length === 1 ? 10.5 : 9.5);
-				let y0 = yarns[0];
-				drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 0.5, 4.5 ], ll);
-				drawing.addLine(layer, styles, y0, [ l, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, r, 4.5 ], ll);
-				drawing.addLine(layer, styles, y0, [ 12.5, 4.5, 13.0, 4.5 ], ll);
-				if (yarns.length >= 2) {
-					let y1 = yarns.slice(1).join(' ');
-					drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 0.5, 3.5 ], ll);
-					drawing.addLine(layer, styles, y1, [ l, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll);
-					drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, r, 3.5 ], ll);
-					drawing.addLine(layer, styles, y1, [ 12.5, 3.5, 13.0, 3.5 ], ll);
-				}
-			} else { console.assert(bed === 'b', "bed should be f/b");
-				let h = (yarns.length === 1 ? 3.5 : 2.5);
-				let l0 = loops[0];
-				drawing.addLine(layer, styles, l0, [ 4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, h ], ll);
-				drawing.addLine(layer, styles, l0, [ 1.5, 5.5, 1.5, 5.5 ], ll);
-				drawing.addLine(layer, styles, l0, [ 11.5, 5.5, 11.5, 5.5 ], ll);
-				drawing.addLine(layer, styles, l0, [ 11.5, h, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0 ], ll);
-				if (loops.length >= 2) {
-					let l1 = loops.slice(1).join(' ');
-					drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 3.5, 0.5, 2.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 2.5, 2.5, 2.5, h ], ll);
-					drawing.addLine(layer, styles, l1, [ 2.5, 5.5, 2.5, 5.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, 5.5, 10.5, 5.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, h, 10.5, 2.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 10.5, 0.5, 9.5, 0.5 ], ll);
-					drawing.addLine(layer, styles, l1, [ 7.5, 0.5, 7.5, 0.0 ], ll);
-				}
-
-				let y0 = yarns[0];
-				drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, 13.0, 4.5 ], ll);
-
-				if (yarns.length >= 2) {
-					let y1 = yarns.slice(1).join(' ');
-					drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll);
-					drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, 13.0, 3.5 ], ll);
-				}
-
-			}
-		} else if (yarns.length >= 1) {
-			//yarns, no loops -> effectively a tuck:
-			let y0 = yarns[0];
-			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 4.5, 4.5, 4.5, 9.0 ], ll);
-			drawing.addLine(layer, styles, y0, [ 8.5, 9.0, 8.5, 4.5, 13.0, 4.5 ], ll);
-			if (yarns.length >= 2) {
-				let y1 = yarns.slice(1).join(' ');
-				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 5.5, 3.5, 5.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, y1, [ 7.5, 9.0, 7.5, 3.5, 13.0, 3.5 ], ll);
-			}
-		} else if (loops.length >= 1) {
-			//loops, no yarns -> drop:
-			let l0 = loops[0];
-			drawing.addLine(layer, styles, l0, [
-				4.5, 0.0, 4.5, 1.5, 1.5, 1.5, 1.5, 7.5,
-				11.5, 7.5, 11.5, 1.5, 8.5, 1.5, 8.5, 0.0
-			]);
-			if (loops.length >= 2) {
-				let l1 = loops.slice(1).join(' ');
-				drawing.addLine(layer, styles, l1, [ 5.5, 0.0, 5.5, 0.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 3.5, 0.5, 2.5, 0.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 2.5, 2.5, 2.5, 6.5, 10.5, 6.5, 10.5, 2.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 10.5, 0.5, 9.5, 0.5 ], ll);
-				drawing.addLine(layer, styles, l1, [ 7.5, 0.5, 7.5, 0.0 ], ll);
-			}
-		}
-
-	} else if (type === 'X') { //xfer target
-		if (bed[0] === 'b') doLoops();
-		if (across.length >= 1) {
-			let a0 = across[0];
-			drawing.addLine(layer, styles, a0, [ 4.5, 6.5, 4.5, 9.0 ], ll);
-			drawing.addLine(layer, styles, a0, [ 8.5, 6.5, 8.5, 9.0 ], ll);
-
-			if (across.length >= 2) {
-				let a1 = across.slice(1).join(' ');
-				drawing.addLine(layer, styles, a1, [ 5.5, 6.5, 5.5, 9.0 ], ll);
-				drawing.addLine(layer, styles, a1, [ 7.5, 6.5, 7.5, 9.0 ], ll);
-			}
-		}
-		if (bed[0] === 'f') doLoops();
-	} else if (type === 'x') {
+		*/
+	} else if (type === 'S') { //split target:
+		doLib('S-' + bed[0]);
+	} else if (type === 's') { //split source:
 		//TO CHECK: across === loops, right?
-		if (across.length >= 1) {
-			let a0 = across[0];
-            drawing.addLine(layer, styles, a0, [ 4.5, 0.0, 4.5, 5.5 ], ll);
-			drawing.addLine(layer, styles, a0, [ 8.5, 0.0, 8.5, 5.5 ], ll);
-
-			if (across.length >= 2) {
-				let a1 = across.slice(1).join(' ');
-				drawing.addLine(layer, styles, a1, [ 5.5, 0.0, 5.5, 5.5 ], ll);
-				drawing.addLine(layer, styles, a1, [ 7.5, 0.0, 7.5, 5.5 ], ll);
-			}
+		if (JSON.stringify(across) !== JSON.stringify(loops)) {
+			console.warn("Expecting across === loops");
 		}
+		let temp = loops;
+		loops = [];
+		doLib('s-' + bed[0]);
+		loops = temp;
+	} else if (type === 'X') { //xfer target:
+		doLib('X-' + bed[0]);
+	} else if (type === 'x') { //xfer source:
+		//TO CHECK: across === loops, right?
+		if (JSON.stringify(across) !== JSON.stringify(loops)) {
+			console.warn("Expecting across === loops");
+		}
+		let temp = loops;
+		loops = [];
+		doLib('x-' + bed[0]);
+		loops = temp;
 	} else {
 		//unknown!
 		drawing.addLine(layer, styles, '#f0f', [ 0.0, 0.0, 13.0, 9.0 ], ll);

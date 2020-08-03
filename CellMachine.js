@@ -1153,7 +1153,7 @@ CellMachine.prototype.knit = function CellMachine_knit(d, n, cs) {
 		});
 	}
 
-	cs.forEach(function(cn){
+	cs.slice().reverse().forEach(function(cn){
 		knit.addOut((d === '+' ? '-' : '+'), cn);
 		knit.addOut('^', cn);
 		knit.addOut(d, cn);
@@ -1181,7 +1181,7 @@ CellMachine.prototype.tuck = function CellMachine_tuck(d, n, cs) {
 
 	if (needleBed(n) === 'b') addLoops.call(this);
 
-	cs.forEach(function(cn){
+	cs.slice().reverse().forEach(function(cn){
 		tuck.addOut((d === '+' ? '-' : '+'), cn);
 		tuck.addOut('^', cn);
 		tuck.addOut(d, cn);
@@ -1207,7 +1207,7 @@ CellMachine.prototype.split = function CellMachine_split(d, n, n2, cs) {
 	let xferFrom = new LoopCell((cs.length ? 's' : 'x'));
 	if (cs.length) xferFrom.dir = d;
 
-	cs.forEach(function(cn){
+	cs.slice().reverse().forEach(function(cn){
 		xferFrom.addOut((d === '+' ? '-' : '+'), cn);
 		xferFrom.addOut('^', cn);
 		xferFrom.addOut(d, cn);
@@ -1275,7 +1275,7 @@ CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
 		});
 	}
 
-	cs.forEach(function(cn){
+	cs.slice().reverse().forEach(function(cn){
 		miss.addOut((d === '+' ? '-' : '+'), cn);
 		miss.addOut(d, cn);
 	}, this);
