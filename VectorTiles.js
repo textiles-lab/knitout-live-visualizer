@@ -481,18 +481,6 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 		doLib(type + "-" + bed[0]);
 	} else if (type === 'm') {
 		doLib(type + "-" + bed[0]);
-		/*
-		if (bed[0] === 'b') doLoops(0);
-		if (yarns.length >= 1) {
-			let y0 = yarns[0];
-			drawing.addLine(layer, styles, y0, [ 0.0, 4.5, 13.0, 4.5], ll, 1);
-			if (yarns.length >= 2) {
-				let y1 = yarns.slice(1).join(' ');
-				drawing.addLine(layer, styles, y1, [ 0.0, 3.5, 13.0, 3.5 ], ll, 1);
-			}
-		}
-		if (bed[0] === 'f') doLoops(2);
-		*/
 	} else if (type === 'S') { //split target:
 		doLib('S-' + bed[0]);
 	} else if (type === 's') { //split source:
