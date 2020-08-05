@@ -164,11 +164,14 @@ k.addHeader('Gauge','15');
 const Carrier = '7';
 
 k.inhook(Carrier);
-for(var i=0;i&lt;4;i++){
+for(var i=3;i&gt;=0;i -= 2){
+    k.tuck("-","f"+i,Carrier);
+}
+for(var i=0;i&lt;=3;i += 2){
     k.tuck("+","f"+i,Carrier);
 }
 
-for(var i=3;i>=0;i--){
+for(var i=3;i&gt;=0;i--){
     k.knit("-","f"+i,Carrier);
 }
 
@@ -183,12 +186,13 @@ k.xfer("b2","fs2");
 k.xfer("bs3","f3");
 
 k.xfer("fs0", "b0");
-k.xfer("f1", "b1");
 k.xfer("fs2", "b2");
-k.xfer("f3", "b3");
 
-for(var i=0;i&lt4;i++){
-    k.knit("+","b"+i,Carrier);
+for(var i=0;i&lt;2;i++){
+    k.knit("+","b0",Carrier);
+    k.knit("+","b2",Carrier);
+    k.knit("-","f3",Carrier);
+    k.knit("-","f1",Carrier);
 }
 
 k.outhook(Carrier);
