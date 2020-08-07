@@ -1285,6 +1285,8 @@ CellMachine.prototype.miss = function CellMachine_miss(d, n, cs) {
 
 CellMachine.prototype.pause = function CellMachine_pause() { /* nothing */ };
 
+CellMachine.prototype['x-stitch-number'] = function Cellmachine_x_stitch_number(args) { };
+
 CellMachine.prototype['x-vis-color'] = function Cellmachine_x_vis_color(args) {
 	let toks = Array.from(arguments);
 	let color = toks.shift();

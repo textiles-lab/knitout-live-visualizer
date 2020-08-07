@@ -422,7 +422,7 @@ function evalJS(codeText){
 
 	let captureConsole = {
 		log: function() {
-			console.log.apply(console, arguments);
+			//console.log.apply(console, arguments);
 			let str = '';
 			for (let i = 0; i < arguments.length; ++i) {
 				if (i !== 0) str += ' ';

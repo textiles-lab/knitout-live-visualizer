@@ -44,13 +44,13 @@ function parseKnitout(codeText, machine, useKnitoutAsSource=false) {
 			} else {
 				var name = m[1];
 				var value = m[2];
-				console.log("Comment header: '" + name + "' is '" + value + "'.");
-				//TODO: handle comment headers.
+				//console.log("Comment header: '" + name + "' is '" + value + "'.");
 				if (name === "Carriers") {
 					carrierNames = value.split(" ");
 					machine.setCarriers(carrierNames);
-					console.log("Carrier names (front-to-back): ", carrierNames);
+					//console.log("Carrier names (front-to-back): ", carrierNames);
 				}
+				//TODO: handle other comment headers.
 				return; //nothing left to do with this line.
 			}
 		} else {

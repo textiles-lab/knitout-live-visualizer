@@ -301,6 +301,87 @@ function updateVisualizer(centerView) {
 	show.showKnitout.parse(knitout, false, centerView);
 }
 
+//Timing code:
+if (false) {
+	function TimingMachine() {
+		this.count = 0;
+		this.ignored = 0;
+	}
+	function countOp() { this.count += 1; }
+	function ignoreOp() { this.ignored += 1; }
+	["in","out","inhook","releasehook","outhook","stitch","rack","pause","x-stitch-number"].forEach(function(op) {
+		TimingMachine.prototype[op] = ignoreOp;
+	});
+	["knit","tuck","split","miss"].forEach(function(op) {
+		TimingMachine.prototype[op] = countOp;
+	});
+	TimingMachine.prototype.setCarriers = function() { }
+	TimingMachine.prototype.stretchLoops = function() { }
+
+	const oldUpdateVisualizer = updateVisualizer;
+	updateVisualizer = function timeUpdateVisualizer(centerView) {
+		const TIMING_ITERS = 100;
+
+		//time code generation:
+		let codeParse = {
+			min:Infinity,
+			total:0.0,
+			boxInstructions:NaN,
+			otherInstructions:NaN
+		};
+		(() => {
+			for (let iter = 0; iter < TIMING_ITERS; ++iter) {
+				let before = performance.now();
+				updateKnitoutMode();
+
+				let code = editor.getValue();
+				if (isKnitout()) {
+					//mark up code with line numbers:
+					knitout = '';
+					code.split('\n').forEach(function(line, lineNumber){
+						knitout += line;
+						if (line.indexOf(';') === -1) {
+							knitout += ';!source:' + (lineNumber+1);
+						}
+						knitout += '\n';
+					});
+				} else {
+					knitout = evalJS(code);
+				}
+
+				const tm = new TimingMachine();
+				parseKnitout(knitout, tm, false);	
+				let after = performance.now();
+				codeParse.min = Math.min(codeParse.min, after - before);
+				codeParse.total += (after - before);
+				if (codeParse.boxInstructions === codeParse.boxInstructions) {
+					console.assert(tm.count === codeParse.boxInstructions);
+					console.assert(tm.ignored === codeParse.otherInstructions);
+				}
+				codeParse.boxInstructions = tm.count;
+				codeParse.otherInstructions = tm.ignored;
+			}
+		})();
+
+		//time visualization overall:
+		(() => {
+			let min = Infinity;
+			let total = 0.0;
+			for (let iter = 0; iter < TIMING_ITERS; ++iter) {
+				let before = performance.now();
+				oldUpdateVisualizer(centerView);
+				let after = performance.now();
+				min = Math.min(min, after - before);
+				total += (after - before);
+			}
+			console.log("Had " + codeParse.boxInstructions + " box-generating instructions and " + codeParse.otherInstructions + " other instructions; user code + parse took " + codeParse.min + " ms min / " + codeParse.total / TIMING_ITERS + " ms avg over " + TIMING_ITERS + " runs.");
+			console.log("Update took " + min + " ms min, " + (total / TIMING_ITERS) + " ms avg over " + TIMING_ITERS + " iterations.");
+			console.log(" User/source: " + codeParse.min + " ms min ; vis: " + (min - codeParse.min) + " ms min; vis/ins: " + (min - codeParse.min) / codeParse.boxInstructions + " ms / instruction min.");
+			//codeParse.total / TIMING_ITERS + " ms avg over " + TIMING_ITERS + " runs.");
+			//console.log("Update took " + min + " ms min, " + (total / TIMING_ITERS) + " ms avg over " + TIMING_ITERS + " iterations.");
+		})();
+	};
+}
 
 
 updateVisualizer(true);
@@ -335,6 +416,7 @@ function readFile(file) {
 			console.warn("Converted dos-style line endings to unix-style.")
 		}
 		editor.setValue(text, -1);
+
 		updateVisualizer(!sameFile);
 	};
 	console.log("reading " + file.name);
