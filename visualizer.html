@@ -50,23 +50,26 @@ body {
 
 #top {
 	width:100vw;
-	height:2em;
+	height:content-min;
 	margin: 4px;
+	display:flex;
+	flex-flow:row wrap;
+	align-items:center;
 }
 #bottom {
 	width:100vw;
-	height:calc(100vh - 2em);
+	flex-grow:1;
 	display:flex;
 	flex-flow: row;
 }
 #visualizer {
 	width:50vw;
-	height:100%;
 	position:relative;
 }
 #show {
 	width: 100%;
 	height: 100%;
+	position:absolute;
 }
 #editor {
 	flex-grow:1;
@@ -84,7 +87,7 @@ button, #fileLabel {
 	cursor:pointer;
 	background-color: #8FCF96;
 	padding: 4px 8px;
-	margin: 0;
+	margin: 0 2px;
 	box-shadow: 0 0 2px 0 rgba(0,0,0,0.2);
 	text-decoration: none;
 	font-family: serif;
@@ -102,24 +105,57 @@ button:hover, #fileLabel:hover {
 	border-color: #8FCF96;
 }
 
+button:active, #fileLabel:active {
+	background-color: #CBF3ff;
+}
+
+#top span {
+	display:block;
+	margin: 0 8px 0 2px;
+	padding: 0;
+}
+
+#top .infoLink {
+	flex-grow:1;
+	text-align:right
+}
+#top .infoLink + .infoLink {
+	flex-grow:0;
+}
+
+.infoLink {
+	color:#888;
+}
+
+.infoLink a {
+	color:#666;
+}
+
+.infoLink a:hover {
+	color:#444;
+}
+
 
 .highlight {
 	background-color: #ffeeb7;
 }
 
-pre {
-	margin: 0;
+#codeWrapper {
+	flex-grow:1;
+	flex-basis:20vw;
+	max-width:30em;
+	display:block;
+	margin:0;
+	position:relative;
 }
 #code1 {
+	position: absolute;
+	width:100%; height:100%;
 	box-sizing: border-box;
-	margin: 1em;
-	margin-top: 0;
-	padding: 1em 0;
+	margin: 0;
+	padding: 0;
 	background-color: #f3f3f3;
-	float: right;
-	height: 80vh;
 	overflow: scroll;
-	position: relative;
 	display:flex;
 	flex-flow: column;
 }
@@ -146,7 +182,9 @@ pre {
 <button id="reload">Reload</button>
 <button id="compile">Run/Show</button>
 <button id="save" onclick="saveKnitout();">Save Knitout</button>
-<input type="checkbox"  name="showKnitout" id="showKnitout" onchange="toggleKnitout()">Show Knitout
+<label for="showKnitout"><input type="checkbox"  name="showKnitout" id="showKnitout" onchange="toggleKnitout()">Show Knitout</label>
+<span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer" target="_blank">github page</a>;</span>
+<span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer/issues" target="_blank">report a bug</a></span>
 </div>
 
 <div id="bottom">
@@ -202,8 +240,8 @@ k.write('wristband.k');
 </div>
 </div>
 
-<pre>
-<code id="code1" style="display: none;">
+<pre id="codeWrapper" style="display:none;">
+<code id="code1">
 </code>
 </pre>
 
@@ -424,7 +462,8 @@ function readFile(file) {
 }
 
 function isKnitout() {
-	return /^;!knitout-\d+/.test(editor.getValue());
+	const line = editor.getSession().getLine(0);
+	return /^;!knitout-\d+/.test(line);
 }
 
 function updateKnitoutMode() {
@@ -436,6 +475,8 @@ function updateKnitoutMode() {
 		editor.getSession().setMode("ace/mode/javascript");
 	}
 }
+
+editor.getSession().on('change', updateKnitoutMode);
 
 
 /*
@@ -470,15 +511,17 @@ document.addEventListener('dragover', function(evt){
 });
 */
 
- let code = document.getElementById("code1");
- let knitoutCheckbox = document.getElementById("showKnitout");
+ const code = document.getElementById("code1");
+ const codeWrapper = document.getElementById("codeWrapper");
+ const knitoutCheckbox = document.getElementById("showKnitout");
  function toggleKnitout() {
 	if (knitoutCheckbox.checked) {
-		code.style.display = 'block';
+		codeWrapper.style.display = '';
 	} else {
-		code.style.display = 'none';
+		codeWrapper.style.display = 'none';
 	}
  }
+ toggleKnitout();
 
 function saveKnitout() {
 	// Remove source line comments
