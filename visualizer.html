@@ -428,12 +428,43 @@ let compile = document.getElementById("compile");
 compile.addEventListener('click', function() { updateVisualizer(false); } );
 
 let reload = document.getElementById("reload");
-let currentFile = null;
+let currentSource = null; //{file:file} or {url:url} or null
 reload.addEventListener('click', function() {
-	if (currentFile) {
-		readFile(currentFile);
+	if (currentSource) {
+		if (currentSource.file) {
+			readFile(currentSource.file);
+		} else if (currentSource.url) {
+			readURL(currentSource.url);
+		}
 	}
 });
+
+
+function setSource(source, text) {
+	const sameFile = JSON.stringify(currentSource) === JSON.stringify(currentSource);
+	currentSource = source;
+	const name = (source.file ? source.file.name : source.url);
+	document.getElementById('fileName').innerText = name;
+	console.log("read " + name);
+	let oldText = text;
+	//line ending conversion:
+	text = text.replace(/\r\n/g,"\n");
+	if (oldText != text) {
+		console.warn("Converted dos-style line endings to unix-style.")
+	}
+	editor.setValue(text, -1);
+	updateVisualizer(!sameFile);
+}
+
+function readURL(url) {
+	console.log("Attempting to read url: '" + url + "'");
+	let request = new XMLHttpRequest();
+	request.addEventListener('load', () => {
+		setSource({url:url}, request.responseText);
+	});
+	request.open('GET', url);
+	request.send();
+}
 
 
 function readFile(file) {
@@ -441,21 +472,8 @@ function readFile(file) {
 
 	//generate new data:
 	var reader = new FileReader();
-	reader.onload = function(){
-		const sameFile = currentFile && (currentFile.name == file.name);
-		currentFile = file;
-		document.getElementById('fileName').innerText = file.name;
-		console.log("read " + file.name);
-		let text = reader.result;
-		let oldText = text;
-		//line ending conversion:
-		text = text.replace(/\r\n/g,"\n");
-		if (oldText != text) {
-			console.warn("Converted dos-style line endings to unix-style.")
-		}
-		editor.setValue(text, -1);
-
-		updateVisualizer(!sameFile);
+	reader.onload = () => {
+		setSource({file:file}, reader.result);
 	};
 	console.log("reading " + file.name);
 	reader.readAsText(file);
@@ -561,6 +579,15 @@ file.addEventListener('change', function(evt){
 	evt.preventDefault();
 	return false;
 });
+
+
+{ //check for '?load=....' in the URL:
+	const m = document.location.search.match(/^\?load=(.+)$/);
+	if (m) {
+		readURL(m[1]);
+	}
+}
+
 </script>
 
 </body>
