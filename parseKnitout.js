@@ -182,6 +182,36 @@ function parseKnitout(codeText, machine, useKnitoutAsSource=false) {
 				machine.pause();
 			} else if (op === "x-end") {
 				end = true;
+			} else if (op === "x-yarn-in") {
+				//yarn carrier stack appears just before a given location
+				if (tokens.length < 3) throw "x-yarn-in requires at least three arguments";
+				var d = parseDirection(tokens.shift());
+				var n = parseNeedle(tokens.shift());
+				var cs = parseCarrierSet(tokens);
+
+				machine.yarnInEdge(d, n, cs);
+			} else if (op === "x-yarn-out") {
+				//yarn carrier stack vanishes just after a given location
+				if (tokens.length < 3) throw "x-yarn-out requires at least three arguments";
+				var d = parseDirection(tokens.shift());
+				var n = parseNeedle(tokens.shift());
+				var cs = parseCarrierSet(tokens);
+
+				machine.yarnOutEdge(d, n, cs);
+			} else if (op === "x-loop-in") {
+				//yarn loop appears at a given location, as if made by given carriers (but not connected)
+				if (tokens.length < 3) throw "x-loop-in requires at least three arguments";
+				var d = parseDirection(tokens.shift());
+				var n = parseNeedle(tokens.shift());
+				var cs = parseCarrierSet(tokens);
+
+				machine.loopInEdge(d, n, cs);
+			} else if (op === "x-loop-out") {
+				//yarn loop vanishes at a given location
+				if (tokens.length !== 1) throw "x-loop-out requires one argument";
+				var n = parseNeedle(tokens.shift());
+
+				machine.loopOutEdge(n);
 			} else if (op.startsWith("x-")) {
 				if (op in machine) {
 					machine[op](...tokens);

@@ -503,6 +503,10 @@ VectorTiles.addLoopTile = function VectorTiles_addLoopTile(drawing, styles, tile
 		loops = [];
 		doLib('x-' + bed[0]);
 		loops = temp;
+	} else if (type === 'i') { //magic loop in
+		doLib(type + "-" + bed[0]);
+	} else if (type === 'o') { //magic loop out
+		doLib(type + "-" + bed[0]);
 	} else {
 		//unknown!
 		drawing.addLine(layer, styles, '#f0f', [ 0.0, 0.0, 13.0, 9.0 ], ll);

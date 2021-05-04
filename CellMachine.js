@@ -1114,6 +1114,32 @@ CellMachine.prototype.outhook = function CellMachine_outhook(cs) {
 	this.out(cs); //hook doesn't matter for this code
 };
 
+//yarn appears just before location n in direction d:
+CellMachine.prototype.yarnInEdge = function CellMachine_yarnInEdge(d, n, cs) {
+	this.topRow += 1; //HACK
+	this.in(cs);
+
+	cs.forEach(function(cn) {
+		let c = this.getCarrier(cn);
+		c.before = true; //HORRIBLE HACK (makeAfter complains if carrier isn't '.before')
+	}, this);
+	const beforeN = (d === '-' ? nextNeedle(n) : previousNeedle(n));
+	this.makeAfter(d, beforeN, cs, []);
+};
+
+//yarn vanishes just after location n in direction d:
+CellMachine.prototype.yarnOutEdge = function CellMachine_yarnOutEdge(d, n, cs) {
+	const afterN = (d === '+' ? nextNeedle(n) : previousNeedle(n));
+	this.bringCarriers(d, afterN, cs);
+	//more HACKS to fix up yarn carrier metadata:
+	cs.forEach(function(cn){
+		let c = this.getCarrier(cn);
+		delete c.before;
+		c.after = {d:(d === '+' ? '-' : '+'), n:afterN};
+	}, this);
+	this.out(cs);
+}
+
 CellMachine.prototype.stitch = function CellMachine_stitch(l, t) {
 	//TODO: set leading / stitch values.
 };
@@ -1121,6 +1147,49 @@ CellMachine.prototype.rack = function CellMachine_rack(r) {
 	if (typeof(r) !== "number") throw "Racking must be a number.";
 	if (!(Math.floor(r) === r || Math.floor(r) + 0.25 === r)) throw "Racking must be an integer or an integer plus 0.25";
 	this.racking = r;
+};
+
+CellMachine.prototype.loopInEdge = function CellMachine_loopInEdge(d, n, cs) {
+	/*this.yarnInEdge(d,n,cs);
+	this.tuck(d,n,cs);
+	this.yarnOutEdge(d,n,cs); //TODO: advance
+	*/
+
+	//build a special 'loop in' face:
+	let cell = new LoopCell('i');
+
+	//add loop inputs from the column:
+	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
+	if (c.length) {
+		c[c.length-1].ports['^'].forEach(function (cn) {
+			cell.addOut('v', cn);
+		});
+	}
+
+	//add knit yarns:
+	cs.slice().reverse().forEach(function(cn){
+		cell.addOut((d === '+' ? '-' : '+'), cn);
+		cell.addOut('^', cn);
+		cell.addOut(d, cn);
+	}, this);
+
+
+	this.knitTuck('+', n, [], cell);
+};
+
+CellMachine.prototype.loopOutEdge = function CellMachine_loopOutEdge(n) {
+	//build a special 'loop out' face:
+	let out = new LoopCell('o');
+
+	//add loop inputs from the column:
+	let c = this.beds[needleBed(n)].getColumn(needleIndex(n));
+	if (c.length) {
+		c[c.length-1].ports['^'].forEach(function (cn) {
+			out.addOut('v', cn);
+		});
+	}
+
+	this.knitTuck('+', n, [], out);
 };
 
 CellMachine.prototype.knitTuck = function CellMachine_knitTuck(d, n, cs, knitTuck) {
