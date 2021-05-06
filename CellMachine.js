@@ -1116,7 +1116,14 @@ CellMachine.prototype.outhook = function CellMachine_outhook(cs) {
 
 //yarn appears just before location n in direction d:
 CellMachine.prototype.yarnInEdge = function CellMachine_yarnInEdge(d, n, cs) {
-	this.topRow += 1; //HACK
+
+	{ //HACK: if column containing n isn't empty, bump topRow to be above it:
+		const column = this.beds[needleBed(n)].getColumn(needleIndex(n));
+		if (column.length) {
+			this.topRow = Math.max(this.topRow, column[column.length-1].y + 1);
+		}
+	}
+
 	this.in(cs);
 
 	cs.forEach(function(cn) {
