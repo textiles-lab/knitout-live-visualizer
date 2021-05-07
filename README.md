@@ -2,6 +2,8 @@
 
 Visualizer for knitout files, javascript files that print knitout with `console.log`, and javascript files that output knitout using knitout-frontend-js. Includes code editing support so you can edit-and-test within the interface.
 
+You can use the visualizer online by visiting the following site: https://textiles-lab.github.io/knitout-live-visualizer/
+
 <table>
 <tr><td><a href="#installation">Installation</a></td><td><a href="#usage">Usage</a></td><td><a href="#troubleshooting">Troubleshooting</a></td></tr>
 </table>
