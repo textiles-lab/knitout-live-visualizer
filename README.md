@@ -8,30 +8,18 @@ You can use the visualizer online by visiting the following site: https://textil
 <tr><td><a href="#installation">Installation</a></td><td><a href="#usage">Usage</a></td><td><a href="#troubleshooting">Troubleshooting</a></td></tr>
 </table>
 
-## <a name="installation"></a>Installation
+## <a name="installation"></a>Local Installation
 
 In the command line, type:
 ```console
-git clone https://github.com/textiles-lab/knitout-live-visualizer
+git clone --recursive https://github.com/textiles-lab/knitout-live-visualizer
 ```
-Next, change into the working directory by typing:
-```console
-cd knitout-live-visualizer
-```
-(*note: if you installed the repo in a subdirectory, make sure to type out the full path.*)
-
-If you have trouble opening the file, you likely need to run the following commands:
-```console
-git submodule init
-git submodule update
-```
-^*These commands initialize and update the submodules (other Git repos) that the visualizer depends on.*
 
 See the github documentation on [cloning a repository](https://docs.github.com/en/free-pro-team@latest/github/creating-cloning-and-archiving-repositories/cloning-a-repository) if you need assistance with installation.
 
 ## <a name="usage"></a>Usage
 
-From the 'knitout-live-visualizer' folder on your computer, open the visualizer.html file in a browser.
+Open the [online version](https://textiles-lab.github.io/knitout-live-visualizer/), or -- if installed locally -- the 'knitout-live-visualizer/visualizer.html' file.
 
 Click the 'Load a knitout or js file' button to open a local file.
 
