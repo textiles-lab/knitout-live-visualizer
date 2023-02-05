@@ -182,6 +182,7 @@ button:active, #fileLabel:active {
 <button id="reload">Reload</button>
 <button id="compile">Run/Show</button>
 <button id="save" onclick="saveKnitout();">Save Knitout</button>
+<button id="save" onclick="saveJavascript();">Save Javascript</button>
 <label for="showKnitout"><input type="checkbox"  name="showKnitout" id="showKnitout" onchange="toggleKnitout()">Show Knitout</label>
 <span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer" target="_blank">github page</a>;</span>
 <span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer/issues" target="_blank">report a bug</a></span>
@@ -555,6 +556,12 @@ function saveKnitout() {
 	}
 	fileSave(commentFreeKnitout, "knitoutFile.k");
 }
+
+function saveJavascript(){
+	fileSave(editor.getValue(), "knitoutFile.js");
+
+}
+
 function fileSave(sourceText, fileIdentity) {
 	var workElement = document.createElement("a");
 	if ('download' in workElement) {
@@ -567,6 +574,7 @@ function fileSave(sourceText, fileIdentity) {
 		document.body.removeChild(workElement);
 	} else throw 'File saving not supported for this browser';
 }
+
 
 var file = document.getElementById("file");
 file.addEventListener('change', function(evt){
