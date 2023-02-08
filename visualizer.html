@@ -267,6 +267,18 @@ let editor = ace.edit("editor-text");
 //themes are available here: https://github.com/ajaxorg/ace/tree/master/lib/ace/theme
 editor.setTheme("ace/theme/tomorrow");
 editor.session.setMode("ace/mode/javascript");
+editor.getSession().on('change', function() {
+  update()
+});
+if (sessionStorage.getItem("autosave")) {
+  // Restore the contents of the text field
+  editor.setValue(sessionStorage.getItem("autosave"));
+}
+
+function update() //writes in <div> with id=output
+{
+	sessionStorage.setItem("autosave", editor.getValue());
+}
 
 var show = document.getElementById('show');
 
