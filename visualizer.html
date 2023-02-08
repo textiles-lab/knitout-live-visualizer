@@ -268,14 +268,14 @@ let editor = ace.edit("editor-text");
 editor.setTheme("ace/theme/tomorrow");
 editor.session.setMode("ace/mode/javascript");
 editor.getSession().on('change', function() {
-  update()
+  saveOnEditorUpdate()
 });
+
 if (sessionStorage.getItem("autosave")) {
-  // Restore the contents of the text field
   editor.setValue(sessionStorage.getItem("autosave"));
 }
 
-function update() //writes in <div> with id=output
+function saveOnEditorUpdate()
 {
 	sessionStorage.setItem("autosave", editor.getValue());
 }
