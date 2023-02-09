@@ -58,7 +58,6 @@ body {
 }
 #bottom {
 	width:100vw;
-	/* flex-grow:1; */
 	display:flex;
 	flex-flow: row;
 }
@@ -74,18 +73,14 @@ body {
 	position:absolute;
 }
 #editor {
-	/* flex-grow:1; */
-	/* flex-basis:20vw; */
 	width: 50%;
 	display:flex;
-	/* flex-flow: column; */
 }
 
 
 
 #editor-text {
 	width:100%;
-	/* flex-grow:1; */
 }
 
 button, #fileLabel {
@@ -147,9 +142,6 @@ button:active, #fileLabel:active {
 }
 
 #codeWrapper {
-	/* flex-grow:1; */
-	/* flex-basis:20vw; */
-	/* width: 40vw; */
 	max-width:30em;
 	min-width: 25em;
 	display:block;
@@ -180,7 +172,7 @@ button:active, #fileLabel:active {
 	display: inline-block;
 	padding: 0.2em 2em 0.2em 0.5em;
 	width: 100%;
-	box-sizing: content-box;
+	box-sizing: border-box;
 }
 .resizable {
 	resize: horizontal;
@@ -192,20 +184,20 @@ button:active, #fileLabel:active {
 </style>
 <body>
 <div id="top">
-	<input id="file" type="file" />
-	<label id="fileLabel" for="file"><span>Load a knitout or js file</span></label>
-	<span id="fileName">(no file loaded)</span>
-	<button id="reload">Reload</button>
-	<button id="compile">Run/Show</button>
-	<button id="save" onclick="saveKnitout();">Save Knitout</button>
-	<label for="showKnitout"><input type="checkbox"  name="showKnitout" id="showKnitout" onchange="toggleKnitout()">Show Knitout</label>
-	<span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer" target="_blank">github page</a>;</span>
-	<span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer/issues" target="_blank">report a bug</a></span>
+<input id="file" type="file" />
+<label id="fileLabel" for="file"><span>Load a knitout or js file</span></label>
+<span id="fileName">(no file loaded)</span>
+<button id="reload">Reload</button>
+<button id="compile">Run/Show</button>
+<button id="save" onclick="saveKnitout();">Save Knitout</button>
+<label for="showKnitout"><input type="checkbox"  name="showKnitout" id="showKnitout" onchange="toggleKnitout()">Show Knitout</label>
+<span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer" target="_blank">github page</a>;</span>
+<span class="infoLink"><a href="https://github.com/textiles-lab/knitout-live-visualizer/issues" target="_blank">report a bug</a></span>
 </div>
 
 <div id="bottom">
-	<div id="editor" class="resizable">
-		<div id="editor-text">
+<div id="editor" class="resizable">
+<div id="editor-text">
 //import the knitout writer code and instantiate it as an object
 const knitout = require('knitout');
 k = new knitout.Writer({carriers:['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']});
@@ -224,7 +216,7 @@ for(var i=0;i&lt;=3;i += 2){
 }
 
 for(var i=3;i&gt;=0;i--){
-	k.knit("-","f"+i,Carrier);
+    k.knit("-","f"+i,Carrier);
 }
 
 k.xfer("f0","b0");
@@ -251,21 +243,20 @@ k.outhook(Carrier);
 
 k.write('wristband.k');
 
-		</div>
-	</div>
-
-	<pre id="codeWrapper" style="display:none;">
-		<code id="code1">
-		</code>
-	</pre>
-
-	<div id="visualizer">
-		<canvas class="ShowKnitout" id="show">
-		</canvas>
-	</div>
+</div>
 </div>
 
+<pre id="codeWrapper" style="display:none;">
+<code id="code1">
+</code>
+</pre>
 
+<div id="visualizer">
+<canvas class="ShowKnitout" id="show"></canvas>
+</div>
+</div>
+
+<div id="dropTarget"></div>
 
 <script src="parseKnitout.js"></script>
 <script src="CellMachine.js"></script>
@@ -285,7 +276,6 @@ editor.session.setMode("ace/mode/javascript");
 var show = document.getElementById('show');
 
 window.addEventListener('resize', function(){
-	console.log("resizng")
 	show.showKnitout.requestDraw();
 });
 
