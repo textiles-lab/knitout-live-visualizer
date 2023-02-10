@@ -443,13 +443,7 @@ compile.addEventListener('click', function() { updateVisualizer(false); } );
 let reload = document.getElementById("reload");
 let currentSource = null; //{file:file} or {url:url} or null
 reload.addEventListener('click', function() {
-	if (currentSource) {
-		if (currentSource.file) {
-			readFile(currentSource.file);
-		} else if (currentSource.url) {
-			readURL(currentSource.url);
-		}
-	}
+	location.reload();
 });
 
 
@@ -601,11 +595,34 @@ file.addEventListener('change', function(evt){
 });
 
 
+
+function addURLParam(key, value){
+	let params = new URLSearchParams(window.location.search);
+	params.set(key, value);
+	const editedURL = window.location.pathname + "?" + params.toString();
+	history.pushState(null, "", editedURL);
+	console.log("hello")
+	let newParams = new URLSearchParams(window.location.search);
+	console.log("updated: " + newParams.get("edited"))
+	
+
+}
 { //check for '?load=....' in the URL:
-	const m = document.location.search.match(/^\?load=(.+)$/);
-	if (m) {
-		readURL(m[1]);
-	}
+	let params = new URLSearchParams(window.location.search);
+	let name = params.get("load");
+	if (name && !isFileEdited()) {
+		readURL(name);
+		addURLParam("edited", "true");
+
+	} 
+}
+
+function isFileEdited(){
+	let params = new URLSearchParams(window.location.search);
+	let edited = params.get("edited");
+	console.log("checking url: " + edited);
+	return edited !== null;
+
 }
 
 </script>
