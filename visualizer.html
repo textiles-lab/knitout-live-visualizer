@@ -586,6 +586,7 @@ var file = document.getElementById("file");
 file.addEventListener('change', function(evt){
 	try {
 		readFile(file.files[0]);
+		deleteParam();
 		file.value = "";
 	} catch (e) {
 		console.log(e);
@@ -601,11 +602,10 @@ function addURLParam(key, value){
 	params.set(key, value);
 	const editedURL = window.location.pathname + "?" + params.toString();
 	history.pushState(null, "", editedURL);
-	console.log("hello")
 	let newParams = new URLSearchParams(window.location.search);
-	console.log("updated: " + newParams.get("edited"))
-	
-
+}
+function deleteParam(){
+	window.history.pushState({}, document.title, window.location.pathname);
 }
 { //check for '?load=....' in the URL:
 	let params = new URLSearchParams(window.location.search);
@@ -620,7 +620,6 @@ function addURLParam(key, value){
 function isFileEdited(){
 	let params = new URLSearchParams(window.location.search);
 	let edited = params.get("edited");
-	console.log("checking url: " + edited);
 	return edited !== null;
 
 }
