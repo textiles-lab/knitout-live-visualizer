@@ -605,7 +605,7 @@ function addURLParam(key, value){
 	let newParams = new URLSearchParams(window.location.search);
 }
 function deleteParam(){
-	window.history.pushState({}, document.title, window.location.pathname);
+	window.history.pushState(null, "", window.location.pathname);
 }
 { //check for '?load=....' in the URL:
 	let params = new URLSearchParams(window.location.search);
@@ -613,7 +613,7 @@ function deleteParam(){
 	if (name && !isFileEdited()) {
 		readURL(name);
 		addURLParam("edited", "true");
-
+		updateVisualizer(true);
 	} 
 }
 
