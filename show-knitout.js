@@ -415,6 +415,14 @@ ShowKnitout.prototype.showTiles = function ShowKnitout_showTiles() {
 	}
 };
 
+ShowKnitout.prototype.resetZoom = function ShowKnitout_resetZoom() {
+	const Margin = 0.5 * TileSet.TileHeight;
+	this.camera.x = 0.5 * (this.max.x + this.min.x);
+	this.camera.y = 0.5 * (this.max.y + this.min.y);
+	this.camera.radius = 0.5 * Math.max(this.max.x - this.min.x + 2.0 * Margin, this.max.y - this.min.y + 2.0 * Margin);
+	this.requestDraw();
+}
+
 ShowKnitout.prototype.parse = function ShowKnitout_parse(codeText, useKnitoutAsSource=false, resetView=false) {
 
 	let oldMin = this.min;
