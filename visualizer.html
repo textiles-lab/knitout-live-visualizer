@@ -249,6 +249,7 @@ k.write('wristband.k');
 <div id="visualizer">
 <canvas class="ShowKnitout" id="show"></canvas>
 </div>
+<button id="resetZoom" style="position: absolute; bottom: 0em; right: 0em;">Reset Zoom</button>
 </div>
 
 <div id="dropTarget"></div>
@@ -317,6 +318,10 @@ show.showKnitout.onDoubleClickSource = function(source) {
 		editor.scrollToLine(line-1, true, true, () => {});
 	}
 };
+
+document.getElementById("resetZoom").onclick = function (evt) {
+	show.showKnitout.resetZoom();
+}
 
 let knitout;
 function updateVisualizer(centerView) {
