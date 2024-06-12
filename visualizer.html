@@ -58,13 +58,14 @@ body {
 }
 #bottom {
 	width:100vw;
-	flex-grow:1;
 	display:flex;
 	flex-flow: row;
 }
 #visualizer {
-	width:50vw;
+	width:100%;
 	position:relative;
+	flex-flow: column;
+	overflow: hidden;
 }
 #show {
 	width: 100%;
@@ -72,14 +73,14 @@ body {
 	position:absolute;
 }
 #editor {
-	flex-grow:1;
-	flex-basis:20vw;
+	width: 50%;
 	display:flex;
-	flex-flow: column;
 }
+
+
+
 #editor-text {
 	width:100%;
-	flex-grow:1;
 }
 
 button, #fileLabel {
@@ -141,9 +142,8 @@ button:active, #fileLabel:active {
 }
 
 #codeWrapper {
-	flex-grow:1;
-	flex-basis:20vw;
 	max-width:30em;
+	min-width: 25em;
 	display:block;
 	margin:0;
 	position:relative;
@@ -159,6 +159,8 @@ button:active, #fileLabel:active {
 	display:flex;
 	flex-flow: column;
 }
+
+
 .lineNumber {
 	color: #888;
 	width: 2.5em;
@@ -172,7 +174,13 @@ button:active, #fileLabel:active {
 	width: 100%;
 	box-sizing: border-box;
 }
-
+.resizable {
+	resize: horizontal;
+	overflow: auto;
+	border: 1px solid;
+	display: inline-flex;
+	height: 96vh;
+}
 </style>
 <body>
 <div id="top">
@@ -189,9 +197,7 @@ button:active, #fileLabel:active {
 </div>
 
 <div id="bottom">
-
-
-<div id="editor">
+<div id="editor" class="resizable">
 <div id="editor-text">
 //import the knitout writer code and instantiate it as an object
 const knitout = require('knitout');
@@ -204,10 +210,10 @@ const Carrier = '7';
 
 k.inhook(Carrier);
 for(var i=3;i&gt;=0;i -= 2){
-    k.tuck("-","f"+i,Carrier);
+	k.tuck("-","f"+i,Carrier);
 }
 for(var i=0;i&lt;=3;i += 2){
-    k.tuck("+","f"+i,Carrier);
+	k.tuck("+","f"+i,Carrier);
 }
 
 for(var i=3;i&gt;=0;i--){
@@ -228,10 +234,10 @@ k.xfer("fs0", "b0");
 k.xfer("fs2", "b2");
 
 for(var i=0;i&lt;2;i++){
-    k.knit("+","b0",Carrier);
-    k.knit("+","b2",Carrier);
-    k.knit("-","f3",Carrier);
-    k.knit("-","f1",Carrier);
+	k.knit("+","b0",Carrier);
+	k.knit("+","b2",Carrier);
+	k.knit("-","f3",Carrier);
+	k.knit("-","f1",Carrier);
 }
 
 k.outhook(Carrier);
