@@ -192,51 +192,67 @@ button:active, #fileLabel:active {
 
 
 <div id="editor">
-<div id="editor-text">
-//import the knitout writer code and instantiate it as an object
-const knitout = require('knitout');
-k = new knitout.Writer({carriers:['1', '2', '3', '4', '5', '6', '7', '8', '9', '10']});
+<div id="editor-text">//this is javascript code that prints out knitout
+// (you can also just write raw knitout into this window)
 
-// add some headers relevant to this job
-k.addHeader('Machine','SWGXYZ');
-k.addHeader('Gauge','15');
-const Carrier = '7';
+//parameters:
+const Carrier = "7";
 
-k.inhook(Carrier);
-for(var i=3;i&gt;=0;i -= 2){
-    k.tuck("-","f"+i,Carrier);
+//file header:
+console.log(";!knitout-2");
+console.log(";;Carriers: 1 2 3 4 5 6 7 8 9 10");
+
+//bring carrier into action using yarn inserting hook:
+console.log(`inhook ${Carrier}`);
+
+//alternating tucks cast-on:
+for(let n = 3; n &gt;= 0; n -= 2) {
+    console.log(`tuck - f${n} ${Carrier}`);
 }
-for(var i=0;i&lt;=3;i += 2){
-    k.tuck("+","f"+i,Carrier);
-}
-
-for(var i=3;i&gt;=0;i--){
-    k.knit("-","f"+i,Carrier);
-}
-
-k.xfer("f0","b0");
-k.xfer("f1","bs1");
-k.xfer("f2","b2");
-k.xfer("f3","bs3");
-
-k.xfer("b0","fs0");
-k.xfer("bs1","f1");
-k.xfer("b2","fs2");
-k.xfer("bs3","f3");
-
-k.xfer("fs0", "b0");
-k.xfer("fs2", "b2");
-
-for(var i=0;i&lt;2;i++){
-    k.knit("+","b0",Carrier);
-    k.knit("+","b2",Carrier);
-    k.knit("-","f3",Carrier);
-    k.knit("-","f1",Carrier);
+for(let n = 0; n &lt;= 3; n += 2) {
+    console.log(`tuck + f${n} ${Carrier}`);
 }
 
-k.outhook(Carrier);
+//row of plain knitting:
+for(let n = 3; n &gt;= 0; n -= 1) {
+    console.log(`knit - f${n} ${Carrier}`);
+}
 
-k.write('wristband.k');
+//send out yarn inserting hook:
+console.log(`releasehook ${Carrier}`);
+
+//do some transfers to exercise the visualizer:
+//(you probably wouldn't do all these redundant moves in an actual knitting program)
+
+console.log(`xfer f0 b0`);
+console.log(`xfer f1 bs1`);
+console.log(`xfer f2 b2`);
+console.log(`xfer f3 bs3`);
+
+console.log(`xfer b0 fs0`);
+console.log(`xfer bs1 f1`);
+console.log(`xfer b2 fs2`);
+console.log(`xfer bs3 f3`);
+
+console.log(`xfer fs0 b0`);
+console.log(`xfer fs2 b2`);
+
+//knit two rows of a tube:
+for(let r = 0; r &lt; 2; r += 1){
+    console.log(`knit + b0 ${Carrier}`);
+    console.log(`knit + b2 ${Carrier}`);
+    console.log(`knit - f3 ${Carrier}`);
+    console.log(`knit - f1 ${Carrier}`);
+}
+
+//send out yarn carrier using yarn inserting hook:
+console.log(`outhook ${Carrier}`);
+
+//drop the loops:
+console.log(`drop b0`);
+console.log(`drop b2`);
+console.log(`drop f3`);
+console.log(`drop f1`);
 
 </div>
 </div>
@@ -328,6 +344,12 @@ function updateVisualizer(centerView) {
 	updateKnitoutMode();
 
 	let code = editor.getValue();
+
+	if (code.indexOf("\r\n") !== -1) {
+		console.log("Converting dos line endings to unix-style (as required by knitout spec).");
+		code = code.replaceAll("\r\n", "\n");
+	}
+
 	if (isKnitout()) {
 		//mark up code with line numbers:
 		knitout = '';
@@ -394,7 +416,7 @@ if (false) {
 				}
 
 				const tm = new TimingMachine();
-				parseKnitout(knitout, tm, false);	
+				parseKnitout(knitout, tm, false);
 				let after = performance.now();
 				codeParse.min = Math.min(codeParse.min, after - before);
 				codeParse.total += (after - before);
@@ -453,11 +475,13 @@ function setSource(source, text) {
 	document.getElementById('fileName').innerText = name;
 	console.log("read " + name);
 	let oldText = text;
+	/*
 	//line ending conversion:
 	text = text.replace(/\r\n/g,"\n");
 	if (oldText != text) {
 		console.warn("Converted dos-style line endings to unix-style.")
 	}
+	*/
 	editor.setValue(text, -1);
 	updateVisualizer(!sameFile);
 }

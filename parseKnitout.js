@@ -9,7 +9,11 @@ function parseKnitout(codeText, machine, useKnitoutAsSource=false) {
 	var inCommentHeader = true;
 	var end = false;
 
-	codeText.split("\n").forEach(function(line, lineNumber) {
+	if (codeText.indexOf("\r\n") !== -1) {
+		console.log("Found a DOS/Windows-style CRLF line ending. These aren't allowed by the knitout specification; but this parser will ignore them.");
+	}
+
+	codeText.split(/\r?\n/).forEach(function(line, lineNumber) {
 		if (end) return;
 		//console.log(lineNumber + ": " + line); //DEBUG
 		function addError(info) {
@@ -72,8 +76,8 @@ function parseKnitout(codeText, machine, useKnitoutAsSource=false) {
 				machine.source(comment.substr(9));
 			}
 		} else if (useKnitoutAsSource){
-        machine.source(lineNumber);
-    }
+			machine.source(lineNumber);
+		}
 
 		//trim leading/trailing whitespace from operation token list:
 		if (tokens.length !== 0 && tokens[0] === "") tokens.shift();
