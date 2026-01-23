@@ -284,6 +284,18 @@ let editor = ace.edit("editor-text");
 //themes are available here: https://github.com/ajaxorg/ace/tree/master/lib/ace/theme
 editor.setTheme("ace/theme/tomorrow");
 editor.session.setMode("ace/mode/javascript");
+editor.getSession().on('change', function() {
+  saveOnEditorUpdate()
+});
+
+if (sessionStorage.getItem("autosave")) {
+  editor.setValue(sessionStorage.getItem("autosave"));
+}
+
+function saveOnEditorUpdate()
+{
+	sessionStorage.setItem("autosave", editor.getValue());
+}
 
 var show = document.getElementById('show');
 
@@ -458,13 +470,7 @@ compile.addEventListener('click', function() { updateVisualizer(false); } );
 let reload = document.getElementById("reload");
 let currentSource = null; //{file:file} or {url:url} or null
 reload.addEventListener('click', function() {
-	if (currentSource) {
-		if (currentSource.file) {
-			readFile(currentSource.file);
-		} else if (currentSource.url) {
-			readURL(currentSource.url);
-		}
-	}
+	location.reload();
 });
 
 
@@ -609,6 +615,7 @@ var file = document.getElementById("file");
 file.addEventListener('change', function(evt){
 	try {
 		readFile(file.files[0]);
+		deleteParam();
 		file.value = "";
 	} catch (e) {
 		console.log(e);
@@ -618,11 +625,32 @@ file.addEventListener('change', function(evt){
 });
 
 
+
+function addURLParam(key, value){
+	let params = new URLSearchParams(window.location.search);
+	params.set(key, value);
+	const editedURL = window.location.pathname + "?" + params.toString();
+	history.pushState(null, "", editedURL);
+	let newParams = new URLSearchParams(window.location.search);
+}
+function deleteParam(){
+	window.history.pushState(null, "", window.location.pathname);
+}
 { //check for '?load=....' in the URL:
-	const m = document.location.search.match(/^\?load=(.+)$/);
-	if (m) {
-		readURL(m[1]);
-	}
+	let params = new URLSearchParams(window.location.search);
+	let name = params.get("load");
+	if (name && !isFileEdited()) {
+		readURL(name);
+		addURLParam("edited", "true");
+		updateVisualizer(true);
+	} 
+}
+
+function isFileEdited(){
+	let params = new URLSearchParams(window.location.search);
+	let edited = params.get("edited");
+	return edited !== null;
+
 }
 
 </script>
